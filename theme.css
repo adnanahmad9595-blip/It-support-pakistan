@@ -1,0 +1,16 @@
+
+/* Shared LovePDFi theme additions */
+html{scroll-padding-top:90px}
+.related-tools{margin-top:50px}
+.related-tools h2{text-align:center}
+.related-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.related-card{display:block;background:var(--soft,#f6f7f9);border:1px solid var(--line,#e3e6ea);border-radius:12px;padding:16px;text-decoration:none;color:var(--ink,#2f3a4b)}
+.related-card b{display:block;margin-bottom:6px;color:var(--accent,#d2540a)}
+.related-card span{color:var(--mute,#5d6878);font-size:15px}
+.related-card:hover{border-color:var(--blue,#1d7be0)}
+.quick-help{margin-top:18px;padding:14px 16px;background:var(--soft,#f6f7f9);border:1px solid var(--line,#e3e6ea);border-left:4px solid var(--blue,#2563eb);border-radius:10px;text-align:left}
+.quick-help b{color:var(--accent,#d2540a)}
+.quick-help p{margin:6px 0 8px;font-size:15px;color:var(--mute,#5d6878)}
+.quick-help a{font-weight:600}
+nav b{display:block;margin:12px 4px 4px;color:var(--accent,#d2540a);font-size:14px;text-transform:uppercase;letter-spacing:.5px}
+

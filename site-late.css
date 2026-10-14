@@ -1,0 +1,13 @@
+/* Styles that must load after theme.css/tools.css (end of page). */
+/* Keep the existing tool buttons and processing controls, but remove the large empty drop/file-summary area above the gallery. */
+[data-panel="pdf"] .subpanel .drop{display:none!important}
+[data-panel="pdf"] .subpanel #pdmlist{display:none!important}
+[data-panel="pdf"] #pdfSmartGallery .psg-head{display:none!important}
+/* The descriptions are useful text but should not push the gallery far below the Clear/Select buttons. */
+[data-panel="pdf"] .subpanel[data-subpanel="pdfimg"]>p.sub:first-child,
+[data-panel="pdf"] .subpanel[data-subpanel="scan"]>p.sub:first-child,
+[data-panel="pdf"] .subpanel[data-subpanel="pdfedit"]>p.sub:first-child,
+[data-panel="pdf"] .subpanel[data-subpanel="imgpdf"]>p.sub:first-child{display:none!important}
+/* The image/PDF preview starts directly beneath the active tool's Select/Clear actions. */
+[data-panel="pdf"] .subpanel .psg-slot{margin:0!important;padding:0!important}
+[data-panel="pdf"] #pdfSmartGallery{margin:8px 0 12px!important}
