@@ -24,7 +24,7 @@ def related_html(slug):
     cards = []
     for r in TOOLS[slug]['related']:
         ico, title, desc = CARDS.get(r) or ('🛠️', html.unescape(re.sub('<[^>]+>', '', TOOLS[r]['h1'])), TOOLS[r]['description'])
-        cards.append('<a class="atl-card" href="/%s" data-nav="1"><span class="atl-ico" aria-hidden="true">%s</span><h3>%s</h3><p>%s</p></a>' % (r, ico, title, desc))
+        cards.append('<a class="atl-card" href="./%s" data-nav="1"><span class="atl-ico" aria-hidden="true">%s</span><h3>%s</h3><p>%s</p></a>' % (r, ico, title, desc))
     return ('<section class="atl" id="relatedTools" aria-labelledby="rel-h"><h2 id="rel-h">Related tools</h2>'
             '<div class="atl-grid">%s</div></section>' % '\n'.join(cards))
 
