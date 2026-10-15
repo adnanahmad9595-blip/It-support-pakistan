@@ -428,3 +428,39 @@ button:disabled, .chip:disabled, .subtab:disabled {
 /* The image/PDF preview starts directly beneath the active tool's Select/Clear actions. */
 [data-panel="pdf"] .subpanel .psg-slot{margin:0!important;padding:0!important}
 [data-panel="pdf"] #pdfSmartGallery{margin:8px 0 12px!important}
+
+/* ===== Image Edit toolbar ===== */
+.edit-toolbar{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  justify-content:center;
+  padding:10px 6px;
+  background:var(--card, #f8fafc);
+  border:1px solid var(--border, #e2e8f0);
+  border-radius:12px;
+}
+.edit-toolbar .edit-tool{
+  min-width:auto;
+  padding:8px 12px;
+  font-size:13px;
+  font-weight:500;
+  border-radius:8px;
+  transition:background .15s, color .15s, box-shadow .15s;
+}
+.edit-toolbar .edit-tool.active,
+.edit-toolbar .edit-tool[aria-pressed="true"]{
+  background:var(--accent, #2563eb);
+  color:#fff;
+  box-shadow:0 2px 8px rgba(37,99,235,.25);
+}
+.edit-options{
+  background:var(--card, #f8fafc);
+  border:1px solid var(--border, #e2e8f0);
+  border-radius:12px;
+  padding:12px;
+}
+.edit-opt .row{margin:0}
+#editToolbar + .edit-options input[type="color"]{
+  width:36px;height:36px;padding:0;border:none;border-radius:8px;cursor:pointer;
+}
