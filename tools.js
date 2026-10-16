@@ -1384,7 +1384,20 @@ var ScanLib=(function(){
 
  /* ===== Image gallery editor: big preview box + crop / rotate / flip, small thumbnails below ===== */
  var GAL=(function(){
-  var items=[],sel=-1,uid=0,bigUrl=null,crop=null,aspect=null,drag=null,tok=0,NW=1,NH=1,MAXI=30,touched=false;
+  var items=[],sel=-1,uid=0,bigUrl=null,crop=null,aspect=null,drag=null,tok=0,NW=1,NH=1,MAXI=30,touched=false,pendingReveal=false,revealT=0;
+  // After a FRESH upload (gallery was empty) scroll just enough that the option buttons under the gallery are in view.
+  // Never runs again until the gallery has been emptied, so normal scrolling is left alone.
+  function revealOptions(){
+   var panel=document.querySelector('[data-panel="images"]');if(!panel||panel.hidden)return;
+   var sub=panel.querySelector('.subpanel:not([hidden])');if(!sub)return;
+   var topEl=sub,botEl=sub;
+   if(sub.getAttribute('data-subpanel')==='resize'){var rc=$('resizeModeControls'),ra=$('resizeActionUnderPreview');if(rc&&!rc.hidden&&rc.offsetParent)topEl=rc;if(ra&&!ra.hidden&&ra.offsetParent)botEl=ra}
+   var hb=document.querySelector('.bar'),hdr=(hb&&hb.offsetHeight)||64,vh=window.innerHeight,m=14;
+   var rt=topEl.getBoundingClientRect(),rb=botEl.getBoundingClientRect();
+   var dy=Math.min(rb.bottom+m-vh,rt.top-hdr-m);   // bring the bottom of the options into view, but never push their top under the header
+   if(dy>8)window.scrollBy({top:dy,behavior:(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)?'auto':'smooth'});
+  }
+  function scheduleReveal(){clearTimeout(revealT);revealT=setTimeout(revealOptions,380)}
   var box=$('gal'),im=$('galImg'),svg=$('galSvg'),strip=$('galStrip'),info=$('galInfo');
   function T(f){return /^image\/(jpeg|png|webp)$/.test(f.type)?f.type:'image/png'}
   function toBlob(c,mime){return new Promise(function(r){c.toBlob(r,mime,0.95)})}
@@ -1423,7 +1436,7 @@ var ScanLib=(function(){
    if(sel<0||sel>=items.length)sel=0;
    var it=cur();
    if(bigUrl)URL.revokeObjectURL(bigUrl);bigUrl=URL.createObjectURL(it.f);
-   cropOff();im.onload=function(){it.w=im.naturalWidth;it.h=im.naturalHeight;drawInfo()};im.onload=function(){drawInfo();setTimeout(updateResizeOverlay,30);if(resizeMode==='crop'&&!crop&&!(cur()&&cur().applied))cropOn()};im.src=bigUrl;drawInfo();
+   cropOff();im.onload=function(){it.w=im.naturalWidth;it.h=im.naturalHeight;drawInfo()};im.onload=function(){drawInfo();setTimeout(updateResizeOverlay,30);if(resizeMode==='crop'&&!crop&&!(cur()&&cur().applied))cropOn();if(pendingReveal){pendingReveal=false;scheduleReveal()}};im.src=bigUrl;drawInfo();
    strip.innerHTML=items.map(function(x,i){return '<div class="gal-th'+(i===sel?' on':'')+'" data-i="'+i+'"><img src="'+x.th+'" alt="Image '+(i+1)+'"><button type="button" class="gal-x" data-x="'+i+'" aria-label="Remove image '+(i+1)+'">✕</button></div>'}).join('');
    $('galReset').disabled=!it.edited;var rr=$('resizeRestoreRow');if(rr)rr.hidden=!it.edited;
   }
@@ -1438,7 +1451,9 @@ var ScanLib=(function(){
     try{items.push({id:++uid,f:pairs[k][0],orig:pairs[k][0],kind:pairs[k][1],th:await thumbOf(pairs[k][0]),edited:false})}catch(e){bad++}
    }
    if(items.length<=first){return err('These images could not be read. Please try again.')}
+   if(first===0)pendingReveal=true;
    sel=first;show();await sync();
+   if(pendingReveal)setTimeout(function(){if(pendingReveal){pendingReveal=false;scheduleReveal()}},1800);
    if(bad||cut)err((bad?bad+' file'+(bad>1?'s':'')+' could not be read. ':'')+(cut?'Only '+MAXI+' files allowed, '+ignored+' file'+(ignored>1?'s':'')+' ignored':''));
   }
   function clearAll(){items=[];sel=-1;tok++;cropOff();if(bigUrl){URL.revokeObjectURL(bigUrl);bigUrl=null}im.removeAttribute('src');strip.innerHTML='';box.hidden=true;resetBatch();clear();hideBadge()}
@@ -1529,7 +1544,7 @@ var ScanLib=(function(){
   }
   // ---------- wiring ----------
   ['rw','rh'].forEach(function(id){$(id).addEventListener('input',function(){var c0=cur();items.forEach(function(it){if(it!==c0)it.cr=null})})});
-  $('galRl').onclick=function(){rot(-1)};$('galRr').onclick=function(){rot(1)};$('galFlip').onclick=flip;
+  $('galRl').onclick=function(){rot(-1)};$('galRr').onclick=function(){rot(1)};$('galFlip').onclick=flip;if($('galRotate'))$('galRotate').onclick=function(){rot(1)};
   var cropEditorOpen=cropOn,cropEditorClose=cropOff;window.cropEditorOpen=cropOn;window.cropEditorClose=cropOff;
   $('galCropOk').onclick=applyCrop;$('galCropNo').onclick=function(){cropOff();setResizeMode('fit')};
   if($('resizeRestoreBtn'))$('resizeRestoreBtn').onclick=function(){$('galReset').click()};

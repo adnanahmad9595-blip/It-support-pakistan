@@ -11,3 +11,7 @@
 /* The image/PDF preview starts directly beneath the active tool's Select/Clear actions. */
 [data-panel="pdf"] .subpanel .psg-slot{margin:0!important;padding:0!important}
 [data-panel="pdf"] #pdfSmartGallery{margin:8px 0 12px!important}
+/* One Rotate button right under the picture; the old overlay toolbar (rotate left/right, flip, reset) is hidden. */
+#gal .gal-tools#galTools{display:none!important}
+#gal .gal-rotate-row{display:flex;justify-content:center;margin:12px 0 4px}
+#gal .gal-rotate-row .chip{padding:10px 22px;font-weight:600;font-size:15px}
