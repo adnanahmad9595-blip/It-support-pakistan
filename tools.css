@@ -428,3 +428,11 @@ button:disabled, .chip:disabled, .subtab:disabled {
 /* The image/PDF preview starts directly beneath the active tool's Select/Clear actions. */
 [data-panel="pdf"] .subpanel .psg-slot{margin:0!important;padding:0!important}
 [data-panel="pdf"] #pdfSmartGallery{margin:8px 0 12px!important}
+
+
+/* Edit tab shares the image gallery: keep picker, drop zone and thumbnails, hide the other tools' big preview/controls */
+#imgzone.edit-mode .gal-stage,#imgzone.edit-mode #galRotateRow,#imgzone.edit-mode #resizeModeControls,
+#imgzone.edit-mode #resizeSizePresets,#imgzone.edit-mode #resizeRestoreRow,#imgzone.edit-mode #resizeActionUnderPreview,
+#imgzone.edit-mode #resizeGuide,#imgzone.edit-mode #galTools,#imgzone.edit-mode #galCropBar,
+#imgzone.edit-mode #batchinfo,#imgzone.edit-mode #imgPrev,#imgzone.edit-mode #thumb,#imgzone.edit-mode #imgGrid,
+#imgzone.edit-mode #fmtbadge,#imgzone.edit-mode #quickfmt{display:none!important}

@@ -1,7 +1,11 @@
 /* LovePDFi Image Editor
  * Loaded on demand by tools.js the first time the "Edit" tab is opened.
  * Everything runs in the browser; the photo never leaves the device.
- * Tools: Crop, Rotate, Flip, Text, Arrow, Rectangle, Circle, Blur, Brightness, Contrast, Watermark.
+ * Tools: Crop, Rotate, Flip, Text, Arrow, Rectangle, Circle, Blur, Brightness, Contrast, Watermark, Add image.
+ * Every action applies instantly and is auto-saved on this device. After Download a confirmation panel appears;
+ * a storage backend can later be plugged in via window.LovePDFiStorage.save(blob, meta).
+ * When window.LovePDFiGallery exists the editor uses the SHARED image gallery (same one as Compress / Resize / Convert):
+ * it edits the selected gallery image and writes every change back to the gallery.
  */
 (function () {
   'use strict';
@@ -26,22 +30,28 @@
     '.ie-row{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:8px 0}',
     '.ie-hint{text-align:center;font-size:13px;color:#667085;margin:4px 0}',
     '.ie-val{min-width:3.2em;text-align:left;font-variant-numeric:tabular-nums}',
-    '.ie-info{text-align:center;font-size:13px;color:#667085;margin:6px 0}'
+    '.ie-info{text-align:center;font-size:13px;color:#667085;margin:6px 0}',
+    '.ie-toolbar .chip[aria-pressed=true]{background:#1d7be0!important;border-color:#1d7be0!important;color:#fff!important}',
+    '.ie-toolbar .chip[aria-pressed=false]{background:var(--soft,#f3f5fa);color:var(--ink,#111)}',
+    '.ie-done{margin:12px auto;max-width:520px;text-align:center;padding:14px;border:1px solid #1d7be0;border-radius:14px;background:rgba(29,123,224,.08)}',
+    '.ie-done strong{display:block;font-size:16px;margin-bottom:4px}',
+    '.ie-auto{min-height:1.2em}'
   ].join('\n');
 
   var TOOLS = [
     ['crop', '✂ Crop'], ['rotate', '↻ Rotate'], ['flip', '⇋ Flip'], ['text', 'T Text'], ['arrow', '➚ Arrow'],
     ['rect', '▭ Rectangle'], ['circle', '◯ Circle'], ['blur', '▒ Blur'], ['brightness', '☀ Brightness'],
-    ['contrast', '◐ Contrast'], ['watermark', '© Watermark']
+    ['contrast', '◐ Contrast'], ['watermark', '© Watermark'], ['image', '🖼 Add image']
   ];
 
   var TEMPLATE =
     '<div class="ie">' +
-    '<p class="sub ie-note">Edit one photo: crop, rotate, flip, add text and shapes, blur private details, adjust brightness and contrast, and add a watermark. Everything stays on your device.</p>' +
+    '<p class="sub ie-note">Edit one photo: crop, rotate, flip, add text, shapes or another image, blur private details, adjust brightness and contrast, and add a watermark. Every change applies instantly and is auto-saved. Everything stays on your device.</p>' +
     '<div class="actions"><button type="button" class="btn" id="ieSel">⬆ Select image</button><button type="button" class="btn" id="ieCam">📷 Take photo</button></div>' +
     '<input type="file" id="ieFile" accept="image/*,.heic,.heif" hidden>' +
     '<input type="file" id="ieCamFile" accept="image/*" capture="environment" hidden>' +
     '<div class="drop" id="ieDrop" tabindex="0" role="button" aria-label="Choose an image to edit">Or drop an image here<br><small>JPG, PNG, WebP or HEIC · one photo at a time</small></div>' +
+    '<div class="ie-row" id="ieResumeRow" hidden><button type="button" class="chip" id="ieResume">↺ Resume last edit</button></div>' +
     '<p class="ie-hint" id="ieMsg" role="status" hidden></p>' +
     '<div id="ieWork" hidden>' +
     '<div class="ie-toolbar" id="ieTools" role="toolbar" aria-label="Editing tools"></div>' +
@@ -50,13 +60,16 @@
     '<div class="ie-row" id="ieHistory">' +
     '<button type="button" class="chip" id="ieUndo" disabled>↶ Undo</button>' +
     '<button type="button" class="chip" id="ieRedo" disabled>↷ Redo</button>' +
-    '<button type="button" class="chip" id="ieReset">⟲ Restore original</button>' +
+    '<button type="button" class="chip" id="ieReset">⟲ Restore image</button>' +
     '<button type="button" class="chip" id="ieChange">⬆ Change image</button></div>' +
     '<div class="ie-row" role="group" aria-label="Save as"><span style="font-weight:500">Save as:</span><div class="seg" id="ieFmt">' +
     '<button type="button" data-f="png" aria-pressed="true">PNG</button><button type="button" data-f="jpeg" aria-pressed="false">JPG</button><button type="button" data-f="webp" aria-pressed="false">WebP</button></div></div>' +
     '<div class="ie-row" id="ieQrow" hidden><label>Quality <input type="range" id="ieQ" min="40" max="100" value="92"> <span class="ie-val" id="ieQv">92%</span></label></div>' +
     '<div class="ie-row"><button type="button" class="btn dl" id="ieSave">⬇ Download edited image</button></div>' +
+    '<div class="ie-done" id="ieDone" role="status" hidden><strong>✓ Download started</strong><span id="ieDoneT"></span>' +
+    '<div class="ie-row"><button type="button" class="btn dl" id="ieAgain">⬇ Download again</button><button type="button" class="chip" id="ieKeep">✎ Keep editing</button></div></div>' +
     '<p class="ie-info" id="ieInfo" role="status"></p>' +
+    '<p class="ie-info ie-auto" id="ieAuto" role="status"></p>' +
     '</div></div>';
 
   function mount(root) {
@@ -67,16 +80,24 @@
     st.textContent = CSS;
     document.head.appendChild(st);
     root.innerHTML = TEMPLATE;
+    var G = window.LovePDFiGallery || null, shared = !!G;
+    if (shared) {
+      root.querySelector('.ie-note').textContent = 'Edit the image selected in the gallery above. Every change applies instantly and is saved back to the gallery, so Compress, Resize and Convert use the edited image.';
+      root.querySelector('.actions').hidden = true;
+      root.querySelector('#ieDrop').hidden = true;
+      root.querySelector('#ieChange').hidden = true;
+    }
 
     function $(id) { return root.querySelector('#' + id); }
     var cv = $('ieCv'), optsEl = $('ieOpts'), workEl = $('ieWork'), msgEl = $('ieMsg'), infoEl = $('ieInfo');
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var autoEl = $('ieAuto'), doneEl = $('ieDone');
 
     // ---------------------------------------------------------------- state
-    var S = { base: null, orig: null, annots: [], sel: -1, adj: { b: 0, c: 0 }, wm: newWm(), name: 'photo', tool: 'crop' };
+    var S = { base: null, orig: null, origBlob: null, annots: [], sel: -1, adj: { b: 0, c: 0 }, wm: newWm(), name: 'photo', tool: null, itemId: null, itemType: '', loadedFile: null, loadingFile: null, writing: false };
     var P = { aspect: null, color: '#e53935', lw: 6, fill: false, text: '', textColor: '#ffffff', textSize: 7, bold: true,
-              blurStyle: 'blur', blurStrength: 14, fmt: 'png', q: 92 };
-    var hist = [], redo = [];
+              blurStyle: 'blur', blurStrength: 14, fmt: 'png', q: 92, imgSize: 40, imgOpacity: 100 };
+    var hist = [], redo = [], autoDirty = false, saveT = null, IMGS = {}, imgSeq = 0;
     var crop = null, drag = null, tmp = null, blurRect = null;
     var K = 1, CK = 1, view = null, viewKey = '', baseId = 0, optEditing = false;
 
@@ -87,8 +108,19 @@
     function say(t) { msgEl.hidden = !t; msgEl.textContent = t || ''; }
 
     // ---------------------------------------------------------------- loading
-    async function loadFile(file) {
+    async function blobToCanvas(blob) {
+      var url = URL.createObjectURL(blob);
+      var img = await new Promise(function (res, rej) { var i = new Image(); i.onload = function () { res(i); }; i.onerror = function () { rej(new Error('img')); }; i.src = url; });
+      var w = img.naturalWidth, h = img.naturalHeight, s = Math.min(1, MAX_SIDE / Math.max(w, h));
+      var c = newCanvas(w * s, h * s);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      return { c: c, s: s };
+    }
+    async function loadFile(file, draft) {
       if (!file) return;
+      if (draft && draft.id && S.loadingFile === file) return;
+      S.loadingFile = file;
       say('');
       try {
         if (/heic|heif/i.test(file.type || '') || /\.hei[cf]$/i.test(file.name || '')) {
@@ -99,34 +131,96 @@
           file = Array.isArray(out) ? out[0] : out;
           file.name = 'photo.jpg';
         }
-        var url = URL.createObjectURL(file);
-        var img = await new Promise(function (res, rej) { var i = new Image(); i.onload = function () { res(i); }; i.onerror = function () { rej(new Error('img')); }; i.src = url; });
-        var w = img.naturalWidth, h = img.naturalHeight, s = Math.min(1, MAX_SIDE / Math.max(w, h));
-        var c = newCanvas(w * s, h * s);
-        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-        URL.revokeObjectURL(url);
-        S.orig = c;
+        var r = await blobToCanvas(file), c = r.c, s = r.s;
+        S.orig = c; S.origBlob = null;
+        if (draft && draft.orig && draft.orig !== file) { try { S.orig = (await blobToCanvas(draft.orig)).c; S.origBlob = draft.orig; } catch (x) { S.orig = c; } }
+        else if (draft && draft.orig) { S.origBlob = draft.orig; }
+        else c.toBlob(function (bl) { S.origBlob = bl; }, 'image/png');
         S.base = c;
         S.annots = []; S.sel = -1; S.adj = { b: 0, c: 0 }; S.wm = newWm();
-        S.name = (file.name || 'photo').replace(/\.[^.]+$/, '') || 'photo';
-        hist = []; redo = []; crop = null; tmp = null; blurRect = null;
+        S.name = draft ? (draft.name || 'photo') : ((file.name || 'photo').replace(/\.[^.]+$/, '') || 'photo');
+        S.itemId = (draft && draft.id) || null; S.itemType = (draft && draft.type) || ''; S.loadedFile = file; S.loadingFile = null;
+        hist = []; redo = []; crop = null; tmp = null; blurRect = null; autoDirty = false;
         workEl.hidden = false;
+        $('ieResumeRow').hidden = true; doneEl.hidden = true; autoEl.textContent = '';
         say(s < 1 ? 'Large photo reduced to ' + c.width + '×' + c.height + ' for smooth editing.' : '');
-        setTool('crop');
+        setTool(null);   // a freshly added image starts with NO tool selected
         syncHist();
         infoEl.textContent = '';
       } catch (e) {
         say(e && e.message === 'heic'
           ? 'This is an iPhone (HEIC) photo. Please convert it first in the “iPhone (HEIC)” tab, then edit it here.'
           : 'Could not open this image. Please try another JPG, PNG or WebP file.');
+        S.loadingFile = null;
       }
+    }
+
+    // ---------------------------------------------------------------- auto-save (this device only)
+    function dbOpen() {
+      return new Promise(function (res, rej) {
+        try {
+          var r = indexedDB.open('lovepdfi-editor', 1);
+          r.onupgradeneeded = function () { r.result.createObjectStore('draft'); };
+          r.onsuccess = function () { res(r.result); };
+          r.onerror = function () { rej(r.error); };
+        } catch (e) { rej(e); }
+      });
+    }
+    function dbPut(v) { return dbOpen().then(function (db) { return new Promise(function (res, rej) { var tx = db.transaction('draft', 'readwrite'); tx.objectStore('draft').put(v, 'last'); tx.oncomplete = res; tx.onerror = function () { rej(tx.error); }; }); }); }
+    function dbGet() { return dbOpen().then(function (db) { return new Promise(function (res, rej) { var q = db.transaction('draft', 'readonly').objectStore('draft').get('last'); q.onsuccess = function () { res(q.result); }; q.onerror = function () { rej(q.error); }; }); }); }
+    function scheduleSave() { autoEl.textContent = 'Saving…'; clearTimeout(saveT); saveT = setTimeout(autoSave, shared ? 300 : 700); }
+    // Shared mode: write the edited picture back into the gallery item it came from
+    function commitToGallery() {
+      if (!S.itemId || !S.base) return Promise.resolve();
+      var id = S.itemId, out = renderFull(S.itemType === 'image/jpeg');
+      S.writing = true;
+      return G.setCanvas(id, out).then(function () {
+        S.writing = false;
+        var c = G.current();
+        if (c && c.id === id) S.loadedFile = c.f;
+        autoEl.textContent = '✓ Saved to gallery';
+      }).catch(function () { S.writing = false; autoEl.textContent = ''; });
+    }
+    function flush() {
+      clearTimeout(saveT); saveT = null;
+      if (shared && S.base && autoDirty) { autoDirty = false; return commitToGallery(); }
+      return Promise.resolve();
+    }
+    function baseName(n) { return (n || 'photo').replace(/\.[^.]+$/, '') || 'photo'; }
+    function syncFromGallery() {
+      var c = G.current();
+      if (!c) {
+        S.base = null; S.orig = null; S.itemId = null; S.loadedFile = null; autoDirty = false; clearTimeout(saveT);
+        workEl.hidden = true; say('Select images above to start editing.');
+        return;
+      }
+      if (S.itemId === c.id && S.loadedFile === c.f) { if (S.base && root.offsetParent !== null) { layout(); render(); } return; }
+      var pending;
+      if (S.base && autoDirty && S.itemId && S.itemId !== c.id) pending = flush();
+      else { autoDirty = false; pending = Promise.resolve(); }
+      pending.then(function () {
+        var c2 = G.current(); if (!c2) return;
+        loadFile(c2.f, { orig: c2.orig, name: baseName(c2.name), id: c2.id, type: c2.type });
+      });
+    }
+    function autoSave() {
+      saveT = null;
+      if (!S.base || drag || !autoDirty) return;
+      autoDirty = false;
+      if (shared) { commitToGallery(); return; }
+      renderFull(false).toBlob(function (b) {
+        if (!b) return;
+        dbPut({ cur: b, orig: S.origBlob, name: S.name, t: Date.now() })
+          .then(function () { autoEl.textContent = '✓ Auto-saved on this device'; })
+          .catch(function () { autoEl.textContent = ''; });
+      }, 'image/png');
     }
 
     // ---------------------------------------------------------------- history
     function snapshot() { return { base: S.base, annots: JSON.parse(JSON.stringify(S.annots)), adj: { b: S.adj.b, c: S.adj.c }, wm: cloneWm(S.wm) }; }
-    function pushHist() { hist.push(snapshot()); if (hist.length > HIST) hist.shift(); redo = []; syncHist(); }
+    function pushHist() { hist.push(snapshot()); if (hist.length > HIST) hist.shift(); redo = []; autoDirty = true; if (doneEl) doneEl.hidden = true; syncHist(); }
     function restore(s) {
-      S.base = s.base; S.annots = s.annots; S.adj = s.adj; S.wm = s.wm; S.sel = -1; crop = null; tmp = null;
+      S.base = s.base; S.annots = s.annots; S.adj = s.adj; S.wm = s.wm; S.sel = -1; crop = null; tmp = null; autoDirty = true;
       if (S.tool === 'crop') initCrop();
       layout(); render(); renderOpts(); syncHist();
     }
@@ -145,9 +239,9 @@
     function layout() {
       if (!S.base) return;
       var wrapW = (root.clientWidth || 340) - 44;
-      var availW = clamp(wrapW, 220, 980);
-      var availH = clamp(window.innerHeight * 0.68, 260, 760);
-      var s = Math.min(availW / S.base.width, availH / S.base.height, 1.5);
+      var availW = clamp(wrapW, 220, 1200);
+      var availH = clamp(window.innerHeight * 0.82, 280, 980);
+      var s = Math.min(availW / S.base.width, availH / S.base.height, 2);
       var cssW = Math.max(40, S.base.width * s), cssH = Math.max(40, S.base.height * s);
       cv.style.width = cssW + 'px'; cv.style.height = cssH + 'px';
       cv.width = Math.round(cssW * dpr); cv.height = Math.round(cssH * dpr);
@@ -203,6 +297,9 @@
         ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = Math.max(1, a.s * 0.08);
         String(a.text).split('\n').forEach(function (l, i) { ctx.fillText(l, a.x, a.y + i * a.s * 1.2); });
         ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0;
+      } else if (a.t === 'img') {
+        var im = IMGS[a.id];
+        if (im) { ctx.save(); ctx.globalAlpha = clamp((a.o == null ? 100 : a.o) / 100, 0.05, 1); ctx.drawImage(im, a.x, a.y, a.w, a.h); ctx.restore(); }
       } else if (a.t === 'rect') {
         if (a.fill) { ctx.fillStyle = hexA(a.c, 0.28); ctx.fillRect(a.x, a.y, a.w, a.h); }
         ctx.strokeStyle = a.c; ctx.lineWidth = a.lw; ctx.strokeRect(a.x, a.y, a.w, a.h);
@@ -273,6 +370,7 @@
       ctx.restore();
       if (S.tool === 'crop' && crop) drawCropUI(ctx);
       if (blurRect) drawBlurSel(ctx);
+      if (autoDirty && !drag) scheduleSave();
     }
 
     function drawCropUI(ctx) {
@@ -307,8 +405,8 @@
     function setTool(t) {
       S.tool = t; S.sel = -1; tmp = null; blurRect = null; crop = null;
       Array.prototype.forEach.call($('ieTools').children, function (b) { b.setAttribute('aria-pressed', b.dataset.t === t ? 'true' : 'false'); });
-      cv.style.touchAction = (t === 'crop' || t === 'text' || t === 'arrow' || t === 'rect' || t === 'circle' || t === 'blur') ? 'none' : 'pan-y';
-      cv.style.cursor = t === 'crop' || t === 'blur' || t === 'arrow' || t === 'rect' || t === 'circle' ? 'crosshair' : t === 'text' ? 'text' : 'default';
+      cv.style.touchAction = (t === 'crop' || t === 'text' || t === 'arrow' || t === 'rect' || t === 'circle' || t === 'blur' || t === 'image') ? 'none' : 'pan-y';
+      cv.style.cursor = t === 'crop' || t === 'blur' || t === 'arrow' || t === 'rect' || t === 'circle' ? 'crosshair' : t === 'text' ? 'text' : t === 'image' ? 'move' : 'default';
       if (t === 'crop') initCrop();
       layout(); render(); renderOpts();
     }
@@ -433,6 +531,7 @@
       for (var i = S.annots.length - 1; i >= 0; i--) {
         var a = S.annots[i], b = bbox(a);
         if (a.t === 'arrow') { if (segDist(p, a) <= tol + a.lw / 2) return i; }
+        else if (a.t === 'img') { if (p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h) return i; }
         else if (a.t === 'text') { if (p.x >= b.x - tol / 2 && p.x <= b.x + b.w + tol / 2 && p.y >= b.y - tol / 2 && p.y <= b.y + b.h + tol / 2) return i; }
         else if (a.t === 'rect') {
           var inOuter = p.x >= b.x - tol && p.x <= b.x + b.w + tol && p.y >= b.y - tol && p.y <= b.y + b.h + tol;
@@ -459,12 +558,13 @@
         else drag = { mode: 'corner', ax: p.x, ay: p.y };
       } else if (t === 'blur') {
         drag = { mode: 'blur', x0: p.x, y0: p.y }; blurRect = { x: p.x, y: p.y, w: 0, h: 0 };
-      } else if (t === 'text' || t === 'arrow' || t === 'rect' || t === 'circle') {
+      } else if (t === 'text' || t === 'arrow' || t === 'rect' || t === 'circle' || t === 'image') {
         var h = hit(p);
         if (h >= 0) {
           S.sel = h; var a = S.annots[h];
           drag = { mode: 'move', ox: p.x, oy: p.y, start: JSON.parse(JSON.stringify(a)), moved: false };
           if (a.t === 'text') { P.text = a.text; P.textColor = a.c; P.bold = !!a.b; P.textSize = a.s / S.base.width * 100; }
+          else if (a.t === 'img') { P.imgOpacity = a.o == null ? 100 : a.o; P.imgSize = a.w / S.base.width * 100; }
           else { P.color = a.c; P.lw = a.lw / Math.max(1, S.base.width / 800); if (a.t !== 'arrow') P.fill = !!a.fill; }
           renderOpts();
         } else if (t === 'text') {
@@ -472,6 +572,8 @@
           var txt = P.text || 'Text';
           S.annots.push({ t: 'text', x: p.x, y: p.y, s: S.base.width * P.textSize / 100, c: P.textColor, b: P.bold, text: txt });
           S.sel = S.annots.length - 1; drag = null; renderOpts();
+        } else if (t === 'image') {
+          S.sel = -1; drag = null; renderOpts();
         } else {
           S.sel = -1; drag = { mode: 'draw', x0: p.x, y0: p.y };
           tmp = t === 'arrow' ? { t: 'arrow', x1: p.x, y1: p.y, x2: p.x, y2: p.y, c: P.color, lw: lwPx() }
@@ -484,6 +586,7 @@
     cv.addEventListener('pointermove', function (e) {
       if (!drag || !S.base) return;
       var p = pt(e), W = S.base.width, H = S.base.height;
+      if (S.tool === 'crop') drag.changed = true;
       if (drag.mode === 'corner') setCropFromAnchor(drag.ax, drag.ay, clamp(p.x, 0, W), clamp(p.y, 0, H));
       else if (drag.mode === 'move' && S.tool === 'crop') { crop.x = clamp(p.x - drag.ox, 0, W - crop.w); crop.y = clamp(p.y - drag.oy, 0, H - crop.h); }
       else if (drag.mode === 'blur') { blurRect = { x: Math.min(drag.x0, p.x), y: Math.min(drag.y0, p.y), w: Math.abs(p.x - drag.x0), h: Math.abs(p.y - drag.y0) }; }
@@ -503,6 +606,7 @@
       if (!drag) return;
       var d = drag; drag = null;
       try { cv.releasePointerCapture(e.pointerId); } catch (x) { /* ignore */ }
+      if (S.tool === 'crop' && d.changed && (d.mode === 'corner' || d.mode === 'move')) { applyCrop(); return; }   // crop applies as soon as you let go
       if (d.mode === 'blur') { var r = blurRect; blurRect = null; if (r && r.w * CK > 6 && r.h * CK > 6) applyBlur(r); }
       else if (d.mode === 'draw' && tmp) {
         var big = tmp.t === 'arrow' ? Math.hypot(tmp.x2 - tmp.x1, tmp.y2 - tmp.y1) * CK > 8 : Math.abs(tmp.w) * CK > 6 && Math.abs(tmp.h) * CK > 6;
@@ -529,10 +633,12 @@
 
     function renderOpts() {
       var t = S.tool, h = '', wm = S.wm;
-      if (t === 'crop') {
+      if (!t) {
+        h = '<p class="ie-hint">Choose a tool above to start editing. Every change applies instantly.</p>';
+      } else if (t === 'crop') {
         h = '<div class="ie-row" id="ieAsp">' + chips('data-ar', [['', 'Free'], ['1', '1:1'], ['1.3333333', '4:3'], ['0.75', '3:4'], ['1.7777778', '16:9'], ['0.5625', '9:16']], P.aspect ? P.aspect : '') + '</div>' +
-          '<div class="ie-row"><button type="button" class="btn dl" id="ieCropOk">✓ Crop</button><button type="button" class="btn red" id="ieCropReset">Reset box</button></div>' +
-          '<p class="ie-hint">Drag the box or its round corners. Choose a ratio to lock the shape.</p>';
+          '<div class="ie-row"><button type="button" class="btn dl" id="ieCropOk">✓ Crop now</button><button type="button" class="btn red" id="ieCropReset">Reset box</button></div>' +
+          '<p class="ie-hint">Drag the box or its round corners — the crop applies when you let go (use Undo to go back). Choose a ratio first to lock the shape.</p>';
       } else if (t === 'rotate') {
         h = '<div class="ie-row"><button type="button" class="chip" data-rot="-1">↶ Rotate left</button><button type="button" class="chip" data-rot="1">↷ Rotate right</button><button type="button" class="chip" data-rot="2">180°</button></div>';
       } else if (t === 'flip') {
@@ -557,6 +663,11 @@
         h = slider('ieBri', 'Brightness', -100, 100, S.adj.b, '') + '<button type="button" class="chip" id="ieAdjReset">Reset</button>';
       } else if (t === 'contrast') {
         h = slider('ieCon', 'Contrast', -100, 100, S.adj.c, '') + '<button type="button" class="chip" id="ieAdjReset">Reset</button>';
+      } else if (t === 'image') {
+        h = '<div class="ie-row"><button type="button" class="chip" id="ieImgPick">⬆ Choose image to add</button><input type="file" id="ieImgFile" accept="image/*" hidden></div>' +
+          slider('ieImgS', 'Size', 5, 100, Math.round(P.imgSize), '%') + slider('ieImgO', 'Opacity', 5, 100, Math.round(P.imgOpacity), '%') +
+          '<div class="ie-row"><button type="button" class="chip" id="ieDelSel">🗑 Delete selected</button></div>' +
+          '<p class="ie-hint">Pick a picture to place on top of your photo. Drag it to move; tap it to select, then change size or opacity.</p>';
       } else if (t === 'watermark') {
         h = '<div class="ie-row" id="ieWt">' + chips('data-wt', [['text', 'Text'], ['logo', 'Logo image']], wm.type) + '</div>' +
           (wm.type === 'text'
@@ -621,6 +732,33 @@
         on(sid, 'input', function (e) { if (!optEditing) { pushHist(); optEditing = true; } S.adj[key] = +e.target.value; setVal(sid + 'V', String(S.adj[key])); render(); });
         on(sid, 'change', endEdit);
         on('ieAdjReset', 'click', function () { if (!S.adj[key]) return; pushHist(); S.adj[key] = 0; renderOpts(); render(); });
+      } else if (t === 'image') {
+        on('ieImgPick', 'click', function () { $('ieImgFile').click(); });
+        on('ieImgFile', 'change', function (e) {
+          var f = e.target.files && e.target.files[0]; if (!f) return;
+          var u = URL.createObjectURL(f), im = new Image();
+          im.onload = function () {
+            pushHist();
+            var id = 'i' + (++imgSeq); IMGS[id] = im;
+            var w = S.base.width * P.imgSize / 100, h = w * im.naturalHeight / im.naturalWidth;
+            S.annots.push({ t: 'img', id: id, x: (S.base.width - w) / 2, y: (S.base.height - h) / 2, w: w, h: h, o: P.imgOpacity });
+            S.sel = S.annots.length - 1; renderOpts(); render();
+          };
+          im.onerror = function () { say('Could not open that image.'); };
+          im.src = u; e.target.value = '';
+        });
+        on('ieImgS', 'input', function (e) {
+          P.imgSize = +e.target.value; setVal('ieImgSV', Math.round(P.imgSize) + '%');
+          var a = selObj();
+          if (a && a.t === 'img') edit(function () { var cx = a.x + a.w / 2, cy = a.y + a.h / 2, r = a.h / a.w; a.w = S.base.width * P.imgSize / 100; a.h = a.w * r; a.x = cx - a.w / 2; a.y = cy - a.h / 2; });
+        });
+        on('ieImgS', 'change', endEdit);
+        on('ieImgO', 'input', function (e) {
+          P.imgOpacity = +e.target.value; setVal('ieImgOV', Math.round(P.imgOpacity) + '%');
+          var a = selObj(); if (a && a.t === 'img') edit(function () { a.o = P.imgOpacity; });
+        });
+        on('ieImgO', 'change', endEdit);
+        on('ieDelSel', 'click', delSel);
       } else if (t === 'watermark') {
         Array.prototype.forEach.call(optsEl.querySelectorAll('[data-wt]'), function (b) { b.addEventListener('click', function () { if (S.wm.type !== b.dataset.wt) { pushHist(); S.wm.type = b.dataset.wt; S.wm.on = S.wm.type === 'text' ? !!S.wm.text : !!S.wm.img; renderOpts(); render(); } }); });
         on('ieWmT', 'input', function (e) { if (!optEditing) { pushHist(); optEditing = true; } S.wm.text = e.target.value; S.wm.on = !!S.wm.text; var c = $('ieWmOn'); if (c) c.checked = S.wm.on; render(); });
@@ -667,7 +805,14 @@
         var a = document.createElement('a'), u = URL.createObjectURL(b);
         a.href = u; a.download = S.name + '-edited.' + ext; document.body.appendChild(a); a.click(); a.remove();
         setTimeout(function () { URL.revokeObjectURL(u); }, 4000);
-        infoEl.textContent = '✓ Saved ' + out.width + '×' + out.height + ' px · ' + (b.size >= 1048576 ? (b.size / 1048576).toFixed(2) + ' MB' : Math.round(b.size / 1024) + ' KB') + ' · ' + ext.toUpperCase();
+        var sizeTxt = b.size >= 1048576 ? (b.size / 1048576).toFixed(2) + ' MB' : Math.round(b.size / 1024) + ' KB';
+        infoEl.textContent = '✓ Saved ' + out.width + '×' + out.height + ' px · ' + sizeTxt + ' · ' + ext.toUpperCase();
+        $('ieDoneT').textContent = S.name + '-edited.' + ext + ' · ' + sizeTxt + ' — check your Downloads folder.';
+        doneEl.hidden = false;
+        // Hook for the storage backend (to be connected later)
+        var meta = { name: S.name + '-edited.' + ext, format: ext, width: out.width, height: out.height, size: b.size };
+        try { if (window.LovePDFiStorage && typeof window.LovePDFiStorage.save === 'function') window.LovePDFiStorage.save(b, meta); } catch (x) { /* ignore */ }
+        try { root.dispatchEvent(new CustomEvent('lovepdfi:edited-image', { bubbles: true, detail: { blob: b, meta: meta } })); } catch (x) { /* ignore */ }
       }, mime, fmt === 'png' ? undefined : P.q / 100);
     }
 
@@ -693,6 +838,11 @@
     $('ieRedo').addEventListener('click', redoOp);
     $('ieReset').addEventListener('click', resetAll);
     $('ieSave').addEventListener('click', save);
+    $('ieAgain').addEventListener('click', save);
+    $('ieKeep').addEventListener('click', function () { doneEl.hidden = true; });
+    var draftData = null;
+    if (!shared) dbGet().then(function (d) { if (d && d.cur) { draftData = d; $('ieResumeRow').hidden = false; } }).catch(function () { /* no saved draft */ });
+    $('ieResume').addEventListener('click', function () { if (draftData) loadFile(draftData.cur, draftData); });
     Array.prototype.forEach.call($('ieFmt').children, function (b) {
       b.addEventListener('click', function () {
         P.fmt = b.dataset.f;
@@ -713,11 +863,22 @@
     var rz;
     window.addEventListener('resize', function () { clearTimeout(rz); rz = setTimeout(function () { if (S.base && root.offsetParent !== null) { layout(); render(); } }, 120); });
 
+    if (shared) {
+      inst = { refresh: syncFromGallery, flush: flush };
+      G.onChange(function (c) {
+        if (S.writing && c && c.id === S.itemId) return;   // our own write-back
+        if (root.offsetParent === null) return;           // Edit tab hidden: refreshed when it is shown
+        syncFromGallery();
+      });
+      syncFromGallery();
+    }
+
     // Small read-only hook used by automated tests
-    root._ie = { state: function () { return { w: S.base && S.base.width, h: S.base && S.base.height, annots: S.annots.length, tool: S.tool, adj: S.adj, wm: S.wm.on, hist: hist.length, crop: crop && { x: crop.x, y: crop.y, w: crop.w, h: crop.h } }; } };
+    root._ie = { state: function () { return { w: S.base && S.base.width, h: S.base && S.base.height, annots: S.annots.length, tool: S.tool, adj: S.adj, overlays: S.annots.filter(function (a) { return a.t === 'img'; }).length, wm: S.wm.on, hist: hist.length, crop: crop && { x: crop.x, y: crop.y, w: crop.w, h: crop.h } }; } };
   }
 
-  window.LovePDFiEditor = { mount: mount };
+  var inst = null;
+  window.LovePDFiEditor = { mount: mount, refresh: function () { if (inst) inst.refresh(); }, flush: function () { return inst ? inst.flush() : Promise.resolve(); } };
   var r = document.getElementById('imgEditorRoot');
   if (r) mount(r);
 })();
