@@ -46,10 +46,13 @@ if (document.body && document.body.getAttribute('data-shared-app') === '1') {
   cur=t;
   Q('.tab').forEach(function(b){b.setAttribute('aria-selected',b.dataset.tab===t)});
   Q('[data-panel]').forEach(function(p){p.hidden=p.dataset.panel!==t});
-  var text={images:'Image tools: edit, compress, convert or resize.',pdf:'PDF tools: compress, merge, split, or make a PDF from photos.',files:'Excel / CSV tools: select your file, then choose the available conversion.',qrtools:'QR tools: create a QR code or decode a QR image to text.'};
+  var text={images:'Image tools: compress, convert, resize or edit.',pdf:'PDF tools: compress, merge, split, or make a PDF from photos.',files:'Excel / CSV tools: select your file, then choose the available conversion.',qrtools:'QR tools: create a QR code or decode a QR image to text.'};
   $('sub').textContent=text[t]||''; msg.textContent='';$('done').classList.remove('show');
  }
- function showSub(panel,key){var root=document.querySelector('[data-panel="'+panel+'"]');if(!root)return;root.querySelectorAll('.subtab').forEach(function(b){b.classList.toggle('active',b.dataset.sub===key)});root.querySelectorAll('[data-subpanel]').forEach(function(p){p.hidden=p.dataset.subpanel!==key});if(panel==='pdf'&&window.PDFShared&&window.PDFShared.onTool)window.PDFShared.onTool(key);}
+ function showSub(panel,key){var root=document.querySelector('[data-panel="'+panel+'"]');if(!root)return;root.querySelectorAll('.subtab').forEach(function(b){b.classList.toggle('active',b.dataset.sub===key)});root.querySelectorAll('[data-subpanel]').forEach(function(p){p.hidden=p.dataset.subpanel!==key});if(panel==='pdf'&&window.PDFShared&&window.PDFShared.onTool)window.PDFShared.onTool(key);if(panel==='images'){var _z=document.getElementById('imgzone');if(_z)_z.hidden=(key==='edit');if(key==='edit')loadEditor();}}
+ var _edLoading=null;
+ function loadEditor(){var r=document.getElementById('imgEditorRoot');if(!r||r.dataset.ieMounted)return;if(window.LovePDFiEditor){window.LovePDFiEditor.mount(r);return}if(_edLoading)return;_edLoading=document.createElement('script');_edLoading.src='image-editor.js?v=1';_edLoading.onerror=function(){_edLoading=null;r.innerHTML='<p class="sub" style="text-align:center">Could not load the editor. Check your connection and try again.</p>'};document.head.appendChild(_edLoading)}
+ window.__lj=function(k){return lj(k)};
 
  var URLS={imgc:'https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js',qr:'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js',jsqr:'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js',pdflib:'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js',pdfjs:'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',xlsx:'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',jspdf:'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',atable:'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js',jszip:'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',heic:'https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js'};
  var SETS={images:['imgc'],pdf:['pdflib','pdfjs'],files:['xlsx','jspdf','atable'],qrtools:['qr','jsqr']};
@@ -57,7 +60,7 @@ if (document.body && document.body.getAttribute('data-shared-app') === '1') {
  function lj(k){return _p[k]||(_p[k]=new Promise(function(res,rej){var s=document.createElement('script');s.src=URLS[k];s.onload=function(){if(k==='pdfjs'&&window.pdfjsLib){try{pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'}catch(e){}}res()};s.onerror=function(){delete _p[k];rej()};document.head.appendChild(s)}))}
  function loadFor(t){if(ready[t])return Promise.resolve();return (SETS[t]||[]).reduce(function(p,k){return p.then(function(){return lj(k)})},Promise.resolve()).then(function(){ready[t]=true})}
  var _show=show;show=function(t){_show(t);(window.requestIdleCallback||function(f){setTimeout(f,200)})(function(){loadFor(t).catch(function(){})})};
- function guard(e){var t=e.target;if(!t||!t.closest||ready[cur])return;
+ function guard(e){var t=e.target;if(!t||!t.closest||ready[cur])return;if(t.closest('#imgEditorRoot'))return;
   var isRun=e.type==='click'&&t.closest('.btn.out'),isFile=e.type==='change'&&t.type==='file',isDrop=e.type==='drop'&&t.closest('.drop');
   if(!(isRun||isFile||isDrop))return;
   e.stopImmediatePropagation();e.preventDefault();msg.textContent='Loading tools…';
@@ -80,8 +83,8 @@ if (document.body && document.body.getAttribute('data-shared-app') === '1') {
   'jpg-to-png':{tab:'images',sub:'convert',fmt:'png'},
   'png-to-jpg':{tab:'images',sub:'convert',fmt:'jpeg'},
   'webp-to-jpg':{tab:'images',sub:'convert',fmt:'jpeg'},
-  'heic-to-jpg':{tab:'images',sub:'convert',fmt:'jpeg'},
-  'heic-to-png':{tab:'images',sub:'convert',fmt:'png'},
+  'heic-to-jpg':{tab:'images',sub:'heic',fmt:'jpeg'},
+  'heic-to-png':{tab:'images',sub:'heic',fmt:'png'},
   'image-to-pdf':{tab:'pdf',sub:'imgpdf'},
   'pdf-to-image':{tab:'pdf',sub:'pdfimg'},
   'camera-to-pdf':{tab:'pdf',sub:'scan',camera:true},
@@ -1380,7 +1383,7 @@ var ScanLib=(function(){
 
 
  /* ===== Image gallery editor: big preview box + crop / rotate / flip, small thumbnails below ===== */
- window.GAL=(function(){
+ var GAL=(function(){
   var items=[],sel=-1,uid=0,bigUrl=null,crop=null,aspect=null,drag=null,tok=0,NW=1,NH=1,MAXI=30,touched=false;
   var box=$('gal'),im=$('galImg'),svg=$('galSvg'),strip=$('galStrip'),info=$('galInfo');
   function T(f){return /^image\/(jpeg|png|webp)$/.test(f.type)?f.type:'image/png'}
@@ -1556,170 +1559,8 @@ var ScanLib=(function(){
   });
   ['dragover','dragenter'].forEach(function(v){box.addEventListener(v,function(e){e.preventDefault()})});
   box.addEventListener('drop',function(e){e.preventDefault();add(Array.prototype.slice.call(e.dataTransfer.files))});
-  function getCurFile(){var it=cur();return it?it.f:null}
-  function isEdited(){var it=cur();return !!(it&&it.edited)}
-  return {add:add,clear:clearAll,cropFor:cropFor,shown:shown,rot:rot,flip:flip,cropOn:cropOn,cropOff:cropOff,applyCrop:applyCrop,getCurFile:getCurFile,isEdited:isEdited,reset:function(){if($('galReset'))$('galReset').click()}};
+  return {add:add,clear:clearAll,cropFor:cropFor,shown:shown};
  })();
- /* ===== Image Edit subtab tools (toolbar + options) ===== */
- (function(){
-  var $=function(id){return document.getElementById(id)};
-  var Q=function(s){return document.querySelectorAll(s)};
-  var toolbar=$('editToolbar'), optsBox=$('editToolOptions');
-  if(!toolbar||!optsBox)return;
-  var active='crop';
-  function setTool(name){
-    active=name;
-    toolbar.querySelectorAll('.edit-tool').forEach(function(b){
-      var on=b.dataset.edit===name;
-      b.classList.toggle('active',on);
-      b.setAttribute('aria-pressed',on?'true':'false');
-    });
-    optsBox.querySelectorAll('.edit-opt').forEach(function(d){d.hidden=d.dataset.opt!==name; if(d.dataset.opt===name)d.style.display='block'; else d.style.display='none';});
-    // crop uses existing gallery crop
-    if(name==='crop' && window.GAL && window.GAL.cropOn){try{window.GAL.cropOn()}catch(e){}}
-    else if(window.GAL && window.GAL.cropOff){try{window.GAL.cropOff()}catch(e){}}
-  }
-  toolbar.querySelectorAll('.edit-tool').forEach(function(b){
-    b.addEventListener('click',function(){setTool(b.dataset.edit)});
-  });
-  // Rotate
-  if($('editRotL'))$('editRotL').onclick=function(){if(window.GAL&&window.GAL.rot)window.GAL.rot(-1)};
-  if($('editRotR'))$('editRotR').onclick=function(){if(window.GAL&&window.GAL.rot)window.GAL.rot(1)};
-  // Flip
-  if($('editFlipH'))$('editFlipH').onclick=function(){if(window.GAL&&window.GAL.flip)window.GAL.flip()};
-  if($('editFlipV'))$('editFlipV').onclick=function(){
-    // vertical flip via canvas since GAL.flip is horizontal
-    var f=window.GAL&&window.GAL.getCurFile&&window.GAL.getCurFile();
-    if(!f)return;
-    var img=new Image();
-    img.onload=function(){
-      var c=document.createElement('canvas');c.width=img.naturalWidth;c.height=img.naturalHeight;
-      var x=c.getContext('2d');x.translate(0,c.height);x.scale(1,-1);x.drawImage(img,0,0);
-      c.toBlob(function(bl){
-        if(!bl)return;
-        var nf=new File([bl],f.name,{type:bl.type||'image/png',lastModified:Date.now()});
-        // re-add via GAL by replacing current
-        if(window.GAL&&window.GAL.reset){/* keep simple */}
-        // use existing replace path through galReset flow is complex; trigger a synthetic replace
-        var itEvt=new CustomEvent('lovepdfi:replace-current',{detail:{file:nf}});
-        document.dispatchEvent(itEvt);
-      },'image/png',0.95);
-    };
-    img.src=URL.createObjectURL(f);
-  };
-  // Crop apply/cancel
-  if($('editCropApply'))$('editCropApply').onclick=function(){if(window.GAL&&window.GAL.applyCrop)window.GAL.applyCrop()};
-  if($('editCropCancel'))$('editCropCancel').onclick=function(){if(window.GAL&&window.GAL.cropOff)window.GAL.cropOff()};
-  // Brightness / Contrast / Blur helpers
-  function applyFilter(type,val){
-    var f=window.GAL&&window.GAL.getCurFile&&window.GAL.getCurFile();
-    if(!f){alert('Please select an image first.');return}
-    var img=new Image();
-    img.onload=function(){
-      var c=document.createElement('canvas');c.width=img.naturalWidth;c.height=img.naturalHeight;
-      var x=c.getContext('2d');
-      if(type==='blur'){x.filter='blur('+val+'px)';x.drawImage(img,0,0)}
-      else if(type==='brightness'){x.filter='brightness('+val+'%)';x.drawImage(img,0,0)}
-      else if(type==='contrast'){x.filter='contrast('+val+'%)';x.drawImage(img,0,0)}
-      else x.drawImage(img,0,0);
-      c.toBlob(function(bl){
-        if(!bl)return;
-        var nf=new File([bl],f.name.replace(/\.[^.]+$/,'')+'_edited.png',{type:'image/png',lastModified:Date.now()});
-        document.dispatchEvent(new CustomEvent('lovepdfi:replace-current',{detail:{file:nf}}));
-      },'image/png',0.95);
-    };
-    img.src=URL.createObjectURL(f);
-  }
-  if($('editBlurAmt'))$('editBlurAmt').oninput=function(){$('editBlurVal').textContent=this.value};
-  if($('editBlurApply'))$('editBlurApply').onclick=function(){applyFilter('blur',$('editBlurAmt').value)};
-  if($('editBrightAmt'))$('editBrightAmt').oninput=function(){$('editBrightVal').textContent=this.value};
-  if($('editBrightApply'))$('editBrightApply').onclick=function(){applyFilter('brightness',$('editBrightAmt').value)};
-  if($('editContrastAmt'))$('editContrastAmt').oninput=function(){$('editContrastVal').textContent=this.value};
-  if($('editContrastApply'))$('editContrastApply').onclick=function(){applyFilter('contrast',$('editContrastAmt').value)};
-  // Watermark
-  if($('editWmApply'))$('editWmApply').onclick=function(){
-    var f=window.GAL&&window.GAL.getCurFile&&window.GAL.getCurFile();
-    if(!f){alert('Please select an image first.');return}
-    var txt=($('editWmText').value||'LovePDFi').trim();
-    var col=$('editWmColor').value||'#ffffff';
-    var size=parseInt($('editWmSize').value,10)||48;
-    var op=(parseInt($('editWmOp').value,10)||40)/100;
-    var img=new Image();
-    img.onload=function(){
-      var c=document.createElement('canvas');c.width=img.naturalWidth;c.height=img.naturalHeight;
-      var x=c.getContext('2d');x.drawImage(img,0,0);
-      x.save();x.globalAlpha=op;x.fillStyle=col;x.font='bold '+size+'px sans-serif';x.textAlign='center';x.textBaseline='middle';
-      x.translate(c.width/2,c.height/2);x.rotate(-Math.PI/6);
-      var step=size*4;
-      for(var y=-c.height;y<c.height*2;y+=step){
-        for(var xx=-c.width;xx<c.width*2;xx+=step*2){
-          x.fillText(txt,xx,y);
-        }
-      }
-      x.restore();
-      c.toBlob(function(bl){
-        if(!bl)return;
-        var nf=new File([bl],f.name.replace(/\.[^.]+$/,'')+'_wm.png',{type:'image/png',lastModified:Date.now()});
-        document.dispatchEvent(new CustomEvent('lovepdfi:replace-current',{detail:{file:nf}}));
-      },'image/png',0.95);
-    };
-    img.src=URL.createObjectURL(f);
-  };
-  // Text add (simple centered for now; click position later)
-  if($('editTextAdd'))$('editTextAdd').onclick=function(){
-    var f=window.GAL&&window.GAL.getCurFile&&window.GAL.getCurFile();
-    if(!f){alert('Please select an image first.');return}
-    var txt=($('editTextVal').value||'').trim();if(!txt){alert('Enter some text.');return}
-    var col=$('editTextColor').value||'#ff0000';
-    var size=parseInt($('editTextSize').value,10)||36;
-    var img=new Image();
-    img.onload=function(){
-      var c=document.createElement('canvas');c.width=img.naturalWidth;c.height=img.naturalHeight;
-      var x=c.getContext('2d');x.drawImage(img,0,0);
-      x.fillStyle=col;x.font='bold '+size+'px sans-serif';x.textAlign='center';x.textBaseline='middle';
-      x.fillText(txt,c.width/2,c.height/2);
-      c.toBlob(function(bl){
-        if(!bl)return;
-        var nf=new File([bl],f.name.replace(/\.[^.]+$/,'')+'_text.png',{type:'image/png',lastModified:Date.now()});
-        document.dispatchEvent(new CustomEvent('lovepdfi:replace-current',{detail:{file:nf}}));
-      },'image/png',0.95);
-    };
-    img.src=URL.createObjectURL(f);
-  };
-  // Download / Reset
-  if($('editDownload'))$('editDownload').onclick=function(){
-    var f=window.GAL&&window.GAL.getCurFile&&window.GAL.getCurFile();
-    if(!f)return;
-    var a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=f.name||'edited.png';a.click();
-    setTimeout(function(){URL.revokeObjectURL(a.href)},2000);
-  };
-  if($('editResetAll'))$('editResetAll').onclick=function(){if(window.GAL&&window.GAL.reset)window.GAL.reset()};
-  // Enable buttons when image present
-  function refreshEditBtns(){
-    var has=!!(window.GAL&&window.GAL.getCurFile&&window.GAL.getCurFile());
-    ['editDownload','editResetAll'].forEach(function(id){var el=$(id);if(el)el.disabled=!has});
-  }
-  document.addEventListener('lovepdfi:image-gallery-update',refreshEditBtns);
-  // Replace current image helper
-  document.addEventListener('lovepdfi:replace-current',function(e){
-    var nf=e.detail&&e.detail.file;if(!nf||!window.GAL)return;
-    // Clear and re-add the new file so gallery refreshes
-    window.GAL.clear();
-    window.GAL.add([nf]);
-    refreshEditBtns();
-  });
-  // Default tool
-  setTool('crop');
-  // When switching to edit subtab, ensure crop tool ready
-  var _showSub=window.showSub||null;
-  // Observe subtab clicks
-  document.querySelectorAll('[data-panel="images"] .subtab').forEach(function(b){
-    b.addEventListener('click',function(){
-      if(b.dataset.sub==='edit'){setTimeout(function(){setTool(active||'crop');refreshEditBtns()},50)}
-    });
-  });
- })();
-
  function pick(f){GAL.add(f?[f]:[])}
  function setBatch(l){GAL.add(l)}
 })();

@@ -96,13 +96,14 @@
 
   <div data-panel="images">
    <div class="subtabs" role="tablist" aria-label="Image tools">
-    <button class="subtab active" data-sub="edit">Edit</button>
-    <button class="subtab" data-sub="compress">Compress</button>
+    <button class="subtab active" data-sub="compress">Compress</button>
     <button class="subtab" data-sub="convert">Convert</button>
     <button class="subtab" data-sub="resize">Resize</button>
+<button class="subtab" data-sub="heic">iPhone (HEIC)</button>
+<button class="subtab" data-sub="edit">Edit</button>
    </div>
    <div id="imgzone">
-    <p class="sub" style="margin:0 0 12px;text-align:center">Select your images below. Edit, compress, convert or resize — format is detected automatically (including iPhone HEIC).</p>
+    <p class="sub" style="margin:0 0 12px;text-align:center">Select your images below. The format is detected automatically, including iPhone (HEIC) photos.</p>
     <div class="actions"><button class="btn" id="sel">⬆ Select images</button><button class="btn" id="camshot">📷 Take photos</button><button class="btn red" id="clr">⊗ Clear</button></div>
     <input type="file" id="file" accept="image/*,.heic,.heif" multiple hidden>
     
@@ -151,127 +152,15 @@
    <div id="fmtbadge" class="sub" hidden style="margin-top:12px;text-align:center"></div>
    <div class="row" id="quickfmt" hidden><span style="font-weight:500">Convert to:</span><button class="chip" data-qf="jpeg">JPG</button><button class="chip" data-qf="png">PNG</button><button class="chip" data-qf="webp">WebP</button></div>
    </div>
-   <div class="subpanel" data-subpanel="compress" hidden>
+   <div class="subpanel" data-subpanel="compress">
     <div class="row" role="group" aria-label="Output format"><span style="font-weight:500">Save as:</span><div class="seg"><button data-outfmt="jpeg" aria-pressed="true">JPG</button><button data-outfmt="webp" aria-pressed="false">WebP (smaller)</button></div></div>
     <div class="row"><div class="seg"><button data-mode="size" aria-pressed="true">File size</button><button data-mode="pct" aria-pressed="false">Percentage</button></div></div>
     <div id="bypct" hidden><div class="row"><button class="chip" data-pct="25">25%</button><button class="chip" data-pct="50" aria-pressed="true">50%</button><button class="chip" data-pct="75">75%</button><button class="chip" data-pct="90">90%</button></div><div class="row" style="flex-direction:column;gap:4px"><input type="range" id="pct" min="5" max="95" step="5" value="50"><div>Make it <b id="pv">50</b>% smaller <span class="sub" id="est"></span></div></div></div>
     <div id="bysize"><div class="row"><button class="chip" data-kb="20">20 KB</button><button class="chip" data-kb="50">50 KB</button><button class="chip" data-kb="100" aria-pressed="true">100 KB</button><button class="chip" data-kb="200">200 KB</button><button class="chip" data-kb="500">500 KB</button><button class="chip" data-kb="1024">1 MB</button><label>or <input type="number" id="kb" min="5" value="100"> KB</label></div></div>
     <div class="row"><button class="btn out" data-run="compress" disabled>Compress Image</button></div>
    </div>
-   <div class="subpanel" data-subpanel="edit">
-    <p class="sub" style="text-align:center;margin:0 0 12px"><b>Edit Image.</b> Select images above, then use the tools below to crop, rotate, draw, adjust or watermark.</p>
-    <div class="edit-toolbar" id="editToolbar" role="toolbar" aria-label="Image edit tools">
-      <button type="button" class="chip edit-tool active" data-edit="crop" title="Crop" aria-pressed="true">✂ Crop</button>
-      <button type="button" class="chip edit-tool" data-edit="rotate" title="Rotate">↻ Rotate</button>
-      <button type="button" class="chip edit-tool" data-edit="flip" title="Flip">⇋ Flip</button>
-      <button type="button" class="chip edit-tool" data-edit="text" title="Add text">T Text</button>
-      <button type="button" class="chip edit-tool" data-edit="arrow" title="Arrow">➜ Arrow</button>
-      <button type="button" class="chip edit-tool" data-edit="rect" title="Rectangle">▭ Rectangle</button>
-      <button type="button" class="chip edit-tool" data-edit="circle" title="Circle">○ Circle</button>
-      <button type="button" class="chip edit-tool" data-edit="blur" title="Blur">◌ Blur</button>
-      <button type="button" class="chip edit-tool" data-edit="brightness" title="Brightness">☀ Brightness</button>
-      <button type="button" class="chip edit-tool" data-edit="contrast" title="Contrast">◑ Contrast</button>
-      <button type="button" class="chip edit-tool" data-edit="watermark" title="Watermark">💧 Watermark</button>
-    </div>
-    <div id="editToolOptions" class="edit-options" style="margin-top:12px">
-      <div class="edit-opt" data-opt="crop" style="display:block">
-        <p class="sub" style="text-align:center;margin:0">Drag the handles on the image to crop. Press Apply Crop when ready.</p>
-        <div class="row" style="justify-content:center;margin-top:8px"><button type="button" class="btn dl" id="editCropApply">✓ Apply Crop</button><button type="button" class="btn" id="editCropCancel">✕ Cancel</button></div>
-      </div>
-      <div class="edit-opt" data-opt="rotate" hidden>
-        <div class="row" style="justify-content:center;gap:8px">
-          <button type="button" class="btn" id="editRotL">↶ Left 90°</button>
-          <button type="button" class="btn" id="editRotR">↷ Right 90°</button>
-        </div>
-      </div>
-      <div class="edit-opt" data-opt="flip" hidden>
-        <div class="row" style="justify-content:center;gap:8px">
-          <button type="button" class="btn" id="editFlipH">⇋ Flip Horizontal</button>
-          <button type="button" class="btn" id="editFlipV">⇅ Flip Vertical</button>
-        </div>
-      </div>
-      <div class="edit-opt" data-opt="text" hidden>
-        <div class="row" style="flex-wrap:wrap;gap:8px;justify-content:center">
-          <input type="text" id="editTextVal" placeholder="Enter text…" style="min-width:160px;padding:8px 12px;border-radius:8px;border:1px solid var(--border)">
-          <input type="color" id="editTextColor" value="#ff0000" title="Text color">
-          <select id="editTextSize" style="padding:8px;border-radius:8px;border:1px solid var(--border)">
-            <option value="24">24px</option>
-            <option value="36" selected>36px</option>
-            <option value="48">48px</option>
-            <option value="64">64px</option>
-            <option value="96">96px</option>
-          </select>
-          <button type="button" class="btn" id="editTextAdd">Add Text</button>
-        </div>
-        <p class="sub" style="text-align:center;margin:6px 0 0">Click on the image where you want the text.</p>
-      </div>
-      <div class="edit-opt" data-opt="arrow" hidden>
-        <div class="row" style="justify-content:center;gap:8px">
-          <input type="color" id="editArrowColor" value="#ff0000" title="Arrow color">
-          <label>Thickness <input type="range" id="editArrowW" min="2" max="20" value="4" style="width:80px"></label>
-        </div>
-        <p class="sub" style="text-align:center;margin:6px 0 0">Click and drag on the image to draw an arrow.</p>
-      </div>
-      <div class="edit-opt" data-opt="rect" hidden>
-        <div class="row" style="justify-content:center;gap:8px">
-          <input type="color" id="editRectColor" value="#ff0000" title="Border color">
-          <label>Thickness <input type="range" id="editRectW" min="1" max="20" value="3" style="width:80px"></label>
-          <label><input type="checkbox" id="editRectFill"> Fill</label>
-        </div>
-        <p class="sub" style="text-align:center;margin:6px 0 0">Click and drag on the image to draw a rectangle.</p>
-      </div>
-      <div class="edit-opt" data-opt="circle" hidden>
-        <div class="row" style="justify-content:center;gap:8px">
-          <input type="color" id="editCircleColor" value="#ff0000" title="Border color">
-          <label>Thickness <input type="range" id="editCircleW" min="1" max="20" value="3" style="width:80px"></label>
-          <label><input type="checkbox" id="editCircleFill"> Fill</label>
-        </div>
-        <p class="sub" style="text-align:center;margin:6px 0 0">Click and drag on the image to draw a circle.</p>
-      </div>
-      <div class="edit-opt" data-opt="blur" hidden>
-        <div class="row" style="justify-content:center;gap:8px;flex-direction:column;align-items:center">
-          <label>Blur amount: <b id="editBlurVal">4</b>px</label>
-          <input type="range" id="editBlurAmt" min="1" max="30" value="4" style="width:200px">
-          <button type="button" class="btn" id="editBlurApply">Apply Blur</button>
-        </div>
-        <p class="sub" style="text-align:center;margin:6px 0 0">Applies a soft blur to the whole image. Use sparingly.</p>
-      </div>
-      <div class="edit-opt" data-opt="brightness" hidden>
-        <div class="row" style="justify-content:center;gap:8px;flex-direction:column;align-items:center">
-          <label>Brightness: <b id="editBrightVal">100</b>%</label>
-          <input type="range" id="editBrightAmt" min="20" max="200" value="100" style="width:200px">
-          <button type="button" class="btn" id="editBrightApply">Apply Brightness</button>
-        </div>
-      </div>
-      <div class="edit-opt" data-opt="contrast" hidden>
-        <div class="row" style="justify-content:center;gap:8px;flex-direction:column;align-items:center">
-          <label>Contrast: <b id="editContrastVal">100</b>%</label>
-          <input type="range" id="editContrastAmt" min="20" max="200" value="100" style="width:200px">
-          <button type="button" class="btn" id="editContrastApply">Apply Contrast</button>
-        </div>
-      </div>
-      <div class="edit-opt" data-opt="watermark" hidden>
-        <div class="row" style="flex-wrap:wrap;gap:8px;justify-content:center">
-          <input type="text" id="editWmText" placeholder="Watermark text" value="LovePDFi" style="min-width:140px;padding:8px 12px;border-radius:8px;border:1px solid var(--border)">
-          <input type="color" id="editWmColor" value="#ffffff" title="Color">
-          <select id="editWmSize" style="padding:8px;border-radius:8px;border:1px solid var(--border)">
-            <option value="24">24px</option>
-            <option value="36">36px</option>
-            <option value="48" selected>48px</option>
-            <option value="64">64px</option>
-          </select>
-          <label>Opacity <input type="range" id="editWmOp" min="10" max="100" value="40" style="width:80px"></label>
-          <button type="button" class="btn" id="editWmApply">Add Watermark</button>
-        </div>
-        <p class="sub" style="text-align:center;margin:6px 0 0">Adds a diagonal watermark across the image.</p>
-      </div>
-    </div>
-    <div class="row" style="justify-content:center;margin-top:14px;gap:8px">
-      <button type="button" class="btn out" id="editDownload" disabled>⬇ Download Edited Image</button>
-      <button type="button" class="btn" id="editResetAll" disabled>⟲ Reset All Edits</button>
-    </div>
-   </div>
    <div class="subpanel" data-subpanel="convert" hidden><div class="row"><div class="seg"><button data-fmt="jpeg" aria-pressed="true">JPG</button><button data-fmt="png">PNG</button><button data-fmt="webp">WEBP</button></div></div><div class="row"><button class="btn out" data-run="convert" disabled>Convert Image</button></div></div>
+   <div class="subpanel" data-subpanel="heic" hidden><p class="sub" style="text-align:center;margin:0 0 10px"><b>iPhone photos:</b> upload your HEIC photos above. They are detected and converted here, free, and nothing is uploaded to a server.</p><div class="row"><span style="font-weight:500">Convert to:</span><div class="seg"><button data-fmt="jpeg" aria-pressed="true">JPG</button><button data-fmt="png" aria-pressed="false">PNG</button><button data-fmt="webp" aria-pressed="false">WEBP</button></div></div><div class="row"><button class="btn out" data-run="convert" disabled>Convert iPhone Photos</button></div></div>
    <div class="subpanel" data-subpanel="resize" hidden>
     <div class="resize-dimensions"><label for="rw">Width <input type="number" id="rw" min="1" max="8000" inputmode="numeric" placeholder="e.g. 413"> <span>px</span></label><label for="rh">Height <input type="number" id="rh" min="1" max="8000" inputmode="numeric" placeholder="e.g. 531"> <span>px</span></label></div>
     <div class="row resize-lock"><label><input type="checkbox" id="lock" checked> Keep proportions</label></div>
@@ -279,6 +168,7 @@
     
     
    </div>
+   <div class="subpanel" data-subpanel="edit" hidden><div id="imgEditorRoot"></div></div>
   </div>
 
   <div data-panel="pdf" hidden>
