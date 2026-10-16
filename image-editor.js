@@ -19,6 +19,8 @@
     '.ie-note{text-align:center;margin:0 0 12px}',
     '.ie-toolbar{display:flex;gap:8px;overflow-x:auto;padding:6px 2px 10px;margin:12px 0 0;-webkit-overflow-scrolling:touch;scrollbar-width:thin}',
     '.ie-toolbar .chip{flex:0 0 auto;white-space:nowrap}',
+    '.ie-upload-actions{justify-content:center;gap:10px;flex-wrap:wrap}',
+    '.ie-upload-actions .btn{min-width:145px}',
     '.ie-stagewrap{display:flex;justify-content:center;margin:10px 0}',
     '.ie-stage{background:#11151e;border-radius:16px;padding:10px;max-width:100%;box-sizing:border-box}',
     '.ie-stage canvas{display:block;max-width:100%;border-radius:6px;background:repeating-conic-gradient(#2a2f3a 0% 25%,#222733 0% 50%) 50%/16px 16px}',
@@ -33,21 +35,24 @@
     '.ie-info{text-align:center;font-size:13px;color:#667085;margin:6px 0}',
     '.ie-toolbar .chip[aria-pressed=true]{background:#1d7be0!important;border-color:#1d7be0!important;color:#fff!important}',
     '.ie-toolbar .chip[aria-pressed=false]{background:var(--soft,#f3f5fa);color:var(--ink,#111)}',
+    '.ie-sticker-grid{display:grid;grid-template-columns:repeat(6,minmax(38px,1fr));max-width:420px;margin:10px auto}',
+    '.ie-sticker{font-size:25px;min-width:40px;min-height:42px;padding:4px!important}',
     '.ie-done{margin:12px auto;max-width:520px;text-align:center;padding:14px;border:1px solid #1d7be0;border-radius:14px;background:rgba(29,123,224,.08)}',
     '.ie-done strong{display:block;font-size:16px;margin-bottom:4px}',
     '.ie-auto{min-height:1.2em}'
   ].join('\n');
 
   var TOOLS = [
-    ['crop', '✂ Crop'], ['rotate', '↻ Rotate'], ['flip', '⇋ Flip'], ['text', 'T Text'], ['arrow', '➚ Arrow'],
+    ['crop', '✂ Crop'], ['rotate', '↻ Rotate'], ['flip', '⇋ Flip'], ['text', 'T Text'], ['draw', '✎ Draw'], ['arrow', '➚ Arrow'],
     ['rect', '▭ Rectangle'], ['circle', '◯ Circle'], ['blur', '▒ Blur'], ['brightness', '☀ Brightness'],
-    ['contrast', '◐ Contrast'], ['watermark', '© Watermark'], ['image', '🖼 Add image']
+    ['contrast', '◐ Contrast'], ['watermark', '© Watermark'], ['image', '🖼 Add image'], ['sticker', '✨ Sticker']
   ];
 
   var TEMPLATE =
     '<div class="ie">' +
     '<p class="sub ie-note">Edit one photo: crop, rotate, flip, add text, shapes or another image, blur private details, adjust brightness and contrast, and add a watermark. Every change applies instantly and is auto-saved. Everything stays on your device.</p>' +
-    '<div class="actions"><button type="button" class="btn" id="ieSel">⬆ Select image</button><button type="button" class="btn" id="ieCam">📷 Take photo</button></div>' +
+    '<div class="actions ie-upload-actions"><button type="button" class="btn" id="ieSel">🖼 Select Image</button><button type="button" class="btn" id="ieCam">📷 Take Photo</button></div>' +
+    '<div class="ie-row" id="ieCancelRow"><button type="button" class="chip" id="ieCancel">✕ Cancel / Clear editor</button></div>' +
     '<input type="file" id="ieFile" accept="image/*,.heic,.heif" hidden>' +
     '<input type="file" id="ieCamFile" accept="image/*" capture="environment" hidden>' +
     '<div class="drop" id="ieDrop" tabindex="0" role="button" aria-label="Choose an image to edit">Or drop an image here<br><small>JPG, PNG, WebP or HEIC · one photo at a time</small></div>' +
@@ -98,7 +103,7 @@
     var P = { aspect: null, color: '#e53935', lw: 6, fill: false, text: '', textColor: '#ffffff', textSize: 7, bold: true,
               blurStyle: 'blur', blurStrength: 14, fmt: 'png', q: 92, imgSize: 40, imgOpacity: 100 };
     var hist = [], redo = [], autoDirty = false, saveT = null, IMGS = {}, imgSeq = 0;
-    var crop = null, drag = null, tmp = null, blurRect = null;
+    var crop = null, drag = null, tmp = null, blurRect = null, stickerCategory = 'smileys';
     var K = 1, CK = 1, view = null, viewKey = '', baseId = 0, optEditing = false;
 
     function newWm() { return { on: false, type: 'text', text: '', color: '#ffffff', size: 8, opacity: 55, pos: 'br', img: null }; }
@@ -147,6 +152,18 @@
         setTool(null);   // a freshly added image starts with NO tool selected
         syncHist();
         infoEl.textContent = '';
+        // Auto-scroll to the editor tools after an image is loaded, including
+        // when the image comes from the shared gallery above this panel.
+        window.setTimeout(function () {
+          var target = $('ieTools') || workEl;
+          if (!target || workEl.hidden) return;
+          try { target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+          catch (e) { target.scrollIntoView(true); }
+          // Leave a little room for sticky site headers on mobile.
+          window.setTimeout(function () {
+            try { window.scrollBy({ top: -72, behavior: 'smooth' }); } catch (e) {}
+          }, 220);
+        }, 120);
       } catch (e) {
         say(e && e.message === 'heic'
           ? 'This is an iPhone (HEIC) photo. Please convert it first in the “iPhone (HEIC)” tab, then edit it here.'
@@ -297,6 +314,8 @@
         ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = Math.max(1, a.s * 0.08);
         String(a.text).split('\n').forEach(function (l, i) { ctx.fillText(l, a.x, a.y + i * a.s * 1.2); });
         ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0;
+      } else if (a.t === 'draw') {
+        if (a.points && a.points.length) { ctx.strokeStyle = a.c; ctx.lineWidth = a.lw; ctx.beginPath(); ctx.moveTo(a.points[0].x, a.points[0].y); for (var pi = 1; pi < a.points.length; pi++) ctx.lineTo(a.points[pi].x, a.points[pi].y); ctx.stroke(); }
       } else if (a.t === 'img') {
         var im = IMGS[a.id];
         if (im) { ctx.save(); ctx.globalAlpha = clamp((a.o == null ? 100 : a.o) / 100, 0.05, 1); ctx.drawImage(im, a.x, a.y, a.w, a.h); ctx.restore(); }
@@ -324,6 +343,7 @@
     }
     function bbox(a) {
       if (a.t === 'text') return textBox(a);
+      if (a.t === 'draw' && a.points && a.points.length) { var xs = a.points.map(function(p){return p.x;}), ys = a.points.map(function(p){return p.y;}); var minx=Math.min.apply(null,xs), maxx=Math.max.apply(null,xs), miny=Math.min.apply(null,ys), maxy=Math.max.apply(null,ys); return {x:minx,y:miny,w:maxx-minx,h:maxy-miny}; }
       if (a.t === 'arrow') return { x: Math.min(a.x1, a.x2), y: Math.min(a.y1, a.y2), w: Math.abs(a.x2 - a.x1), h: Math.abs(a.y2 - a.y1) };
       return { x: Math.min(a.x, a.x + a.w), y: Math.min(a.y, a.y + a.h), w: Math.abs(a.w), h: Math.abs(a.h) };
     }
@@ -407,7 +427,8 @@
       Array.prototype.forEach.call($('ieTools').children, function (b) { b.setAttribute('aria-pressed', b.dataset.t === t ? 'true' : 'false'); });
       cv.style.touchAction = (t === 'crop' || t === 'text' || t === 'arrow' || t === 'rect' || t === 'circle' || t === 'blur' || t === 'image') ? 'none' : 'pan-y';
       cv.style.cursor = t === 'crop' || t === 'blur' || t === 'arrow' || t === 'rect' || t === 'circle' ? 'crosshair' : t === 'text' ? 'text' : t === 'image' ? 'move' : 'default';
-      if (t === 'crop') initCrop();
+      // Crop starts with no overlay; the user chooses a preset to place one.
+      if (t !== 'crop') crop = null;
       layout(); render(); renderOpts();
     }
 
@@ -440,7 +461,7 @@
       pushHist(); bake();
       var c = newCanvas(crop.w, crop.h);
       c.getContext('2d').drawImage(S.base, Math.round(crop.x), Math.round(crop.y), c.width, c.height, 0, 0, c.width, c.height);
-      S.base = c; initCrop(); layout(); render(); renderOpts();
+      S.base = c; crop = null; P.aspect = null; layout(); render(); renderOpts();
     }
 
     // Shapes and text are merged into the photo before a geometry change (crop / rotate / flip)
@@ -558,6 +579,9 @@
         else drag = { mode: 'corner', ax: p.x, ay: p.y };
       } else if (t === 'blur') {
         drag = { mode: 'blur', x0: p.x, y0: p.y }; blurRect = { x: p.x, y: p.y, w: 0, h: 0 };
+      } else if (t === 'draw') {
+        tmp = { t: 'draw', points: [{x:p.x,y:p.y}], c: P.color, lw: lwPx() };
+        drag = { mode: 'draw', x0: p.x, y0: p.y };
       } else if (t === 'text' || t === 'arrow' || t === 'rect' || t === 'circle' || t === 'image') {
         var h = hit(p);
         if (h >= 0) {
@@ -591,7 +615,7 @@
       else if (drag.mode === 'move' && S.tool === 'crop') { crop.x = clamp(p.x - drag.ox, 0, W - crop.w); crop.y = clamp(p.y - drag.oy, 0, H - crop.h); }
       else if (drag.mode === 'blur') { blurRect = { x: Math.min(drag.x0, p.x), y: Math.min(drag.y0, p.y), w: Math.abs(p.x - drag.x0), h: Math.abs(p.y - drag.y0) }; }
       else if (drag.mode === 'draw') {
-        if (tmp.t === 'arrow') { tmp.x2 = p.x; tmp.y2 = p.y; } else { tmp.w = p.x - drag.x0; tmp.h = p.y - drag.y0; }
+        if (tmp.t === 'arrow') { tmp.x2 = p.x; tmp.y2 = p.y; } else if (tmp.t === 'draw') { tmp.points.push({x:p.x,y:p.y}); } else { tmp.w = p.x - drag.x0; tmp.h = p.y - drag.y0; }
       } else if (drag.mode === 'move') {
         var a = S.annots[S.sel], dx = p.x - drag.ox, dy = p.y - drag.oy, s0 = drag.start;
         if (!drag.moved && Math.hypot(dx, dy) * CK < 3) return;
@@ -606,10 +630,10 @@
       if (!drag) return;
       var d = drag; drag = null;
       try { cv.releasePointerCapture(e.pointerId); } catch (x) { /* ignore */ }
-      if (S.tool === 'crop' && d.changed && (d.mode === 'corner' || d.mode === 'move')) { applyCrop(); return; }   // crop applies as soon as you let go
+      // Moving/resizing the crop frame only adjusts it; Save Crop applies it explicitly.
       if (d.mode === 'blur') { var r = blurRect; blurRect = null; if (r && r.w * CK > 6 && r.h * CK > 6) applyBlur(r); }
       else if (d.mode === 'draw' && tmp) {
-        var big = tmp.t === 'arrow' ? Math.hypot(tmp.x2 - tmp.x1, tmp.y2 - tmp.y1) * CK > 8 : Math.abs(tmp.w) * CK > 6 && Math.abs(tmp.h) * CK > 6;
+        var big = tmp.t === 'draw' ? tmp.points.length > 1 : (tmp.t === 'arrow' ? Math.hypot(tmp.x2 - tmp.x1, tmp.y2 - tmp.y1) * CK > 8 : Math.abs(tmp.w) * CK > 6 && Math.abs(tmp.h) * CK > 6);
         if (big) { pushHist(); S.annots.push(tmp); S.sel = S.annots.length - 1; }
         tmp = null; renderOpts();
       }
@@ -636,11 +660,11 @@
       if (!t) {
         h = '<p class="ie-hint">Choose a tool above to start editing. Every change applies instantly.</p>';
       } else if (t === 'crop') {
-        h = '<div class="ie-row" id="ieAsp">' + chips('data-ar', [['', 'Free'], ['1', '1:1'], ['1.3333333', '4:3'], ['0.75', '3:4'], ['1.7777778', '16:9'], ['0.5625', '9:16']], P.aspect ? P.aspect : '') + '</div>' +
-          '<div class="ie-row"><button type="button" class="btn dl" id="ieCropOk">✓ Crop now</button><button type="button" class="btn red" id="ieCropReset">Reset box</button></div>' +
-          '<p class="ie-hint">Drag the box or its round corners — the crop applies when you let go (use Undo to go back). Choose a ratio first to lock the shape.</p>';
+        h = '<div class="ie-row" id="ieAsp">' + chips('data-ar', [['', 'Free crop'], ['0.6666667', 'Passport'], ['1.5', 'Landscape'], ['1', '1:1'], ['1.3333333', '4:3'], ['0.75', '3:4'], ['1.7777778', '16:9'], ['0.5625', '9:16']], P.aspect ? P.aspect : '') + '</div>' +
+          '<div class="ie-row"><button type="button" class="btn dl" id="ieCropOk"' + (!crop ? ' disabled' : '') + '>✓ Save Crop</button><button type="button" class="btn red" id="ieCropReset"' + (!crop ? ' disabled' : '') + '>Reset box</button></div>' +
+          '<p class="ie-hint">Choose a crop size to show the frame. Drag the frame or its corner handles to position and size it, then tap Save Crop. The main gallery image will not keep the crop frame.</p>';
       } else if (t === 'rotate') {
-        h = '<div class="ie-row"><button type="button" class="chip" data-rot="-1">↶ Rotate left</button><button type="button" class="chip" data-rot="1">↷ Rotate right</button><button type="button" class="chip" data-rot="2">180°</button></div>';
+        h = '<div class="ie-row"><button type="button" class="btn" data-rot="1">↻ Rotate image 90°</button></div><p class="ie-hint">Tap repeatedly to rotate the photo clockwise in 90° steps. The gallery preview updates each time.</p>';
       } else if (t === 'flip') {
         h = '<div class="ie-row"><button type="button" class="chip" data-flip="h">⇋ Flip horizontal</button><button type="button" class="chip" data-flip="v">⇅ Flip vertical</button></div>';
       } else if (t === 'text') {
@@ -650,6 +674,8 @@
           '<label><input type="checkbox" id="ieTb"' + (P.bold ? ' checked' : '') + '> Bold</label>' +
           '<div class="ie-row"><button type="button" class="chip" id="ieAddCenter">＋ Add text in the middle</button><button type="button" class="chip" id="ieDelSel">🗑 Delete selected</button></div>' +
           '<p class="ie-hint">Tap the photo to place text. Tap text to select it, then drag to move or edit it above.</p>';
+      } else if (t === 'draw') {
+        h = '<label>Colour <input type="color" id="ieSc" value="' + P.color + '"></label>' + slider('ieLw', 'Thickness', 1, 30, Math.round(P.lw), '') + '<div class="ie-row"><button type="button" class="chip" id="ieDelAll">Delete all drawings</button></div><p class="ie-hint">Draw freehand directly on the photo. Choose any colour and line thickness.</p>';
       } else if (t === 'arrow' || t === 'rect' || t === 'circle') {
         h = '<label>Colour <input type="color" id="ieSc" value="' + P.color + '"></label>' + slider('ieLw', 'Thickness', 1, 20, Math.round(P.lw), '') +
           (t === 'arrow' ? '' : '<label><input type="checkbox" id="ieFill"' + (P.fill ? ' checked' : '') + '> Fill</label>') +
@@ -668,6 +694,18 @@
           slider('ieImgS', 'Size', 5, 100, Math.round(P.imgSize), '%') + slider('ieImgO', 'Opacity', 5, 100, Math.round(P.imgOpacity), '%') +
           '<div class="ie-row"><button type="button" class="chip" id="ieDelSel">🗑 Delete selected</button></div>' +
           '<p class="ie-hint">Pick a picture to place on top of your photo. Drag it to move; tap it to select, then change size or opacity.</p>';
+      } else if (t === 'sticker') {
+        var stickerSets = {
+          smileys: ['😀','😍','😂','🥹','😎','😘','🥳','😢','😡','🤔','🤗','😴'],
+          hearts: ['❤️','🧡','💛','💚','💙','💜','🖤','🤍','💕','💖','💘','💝'],
+          nature: ['🌸','🌹','🌻','🌈','☀️','⭐','🌙','🔥','🍀','🌼','🌷','🦋'],
+          symbols: ['👍','👏','🙏','💯','🎉','🎂','🏆','✔️','❌','⚡','💡','📌'],
+          animals: ['🐱','🐶','🐼','🦁','🐸','🐰','🦄','🐻','🐵','🐥','🦊','🐢']
+        };
+        h = '<div class="ie-row" id="ieStickerCats">' + chips('data-sc', [['smileys','😀 Smileys'],['hearts','❤️ Hearts'],['nature','🌿 Nature'],['symbols','✨ Symbols'],['animals','🐾 Animals']], stickerCategory) + '</div>' +
+          '<div class="ie-row ie-sticker-grid" id="ieStickerChoices">' + stickerSets[stickerCategory].map(function (v) { return '<button type="button" class="chip ie-sticker" data-sticker="' + v + '" aria-label="Add sticker ' + v + '">' + v + '</button>'; }).join('') + '</div>' +
+          '<label>Sticker size ' + slider('ieStickerSize', '', 4, 30, 12, '%').replace('<label>', '').replace('</label>', '') + '</label>' +
+          '<p class="ie-hint">Choose a category, then tap a sticker to add it to the centre of your photo. Drag it to reposition.</p>';
       } else if (t === 'watermark') {
         h = '<div class="ie-row" id="ieWt">' + chips('data-wt', [['text', 'Text'], ['logo', 'Logo image']], wm.type) + '</div>' +
           (wm.type === 'text'
@@ -691,11 +729,11 @@
           b.addEventListener('click', function () {
             P.aspect = b.dataset.ar ? parseFloat(b.dataset.ar) : null;
             Array.prototype.forEach.call(optsEl.querySelectorAll('[data-ar]'), function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
-            refitCrop(); render();
+            initCrop(); render(); renderOpts();
           });
         });
         on('ieCropOk', 'click', applyCrop);
-        on('ieCropReset', 'click', function () { initCrop(); render(); });
+        on('ieCropReset', 'click', function () { crop = null; render(); renderOpts(); });
       } else if (t === 'rotate') {
         Array.prototype.forEach.call(optsEl.querySelectorAll('[data-rot]'), function (b) { b.addEventListener('click', function () { rotate(parseInt(b.dataset.rot, 10)); }); });
       } else if (t === 'flip') {
@@ -714,7 +752,7 @@
           a.x = (S.base.width - b.w) / 2; a.y = (S.base.height - b.h) / 2; S.annots.push(a); S.sel = S.annots.length - 1; render();
         });
         on('ieDelSel', 'click', delSel);
-      } else if (t === 'arrow' || t === 'rect' || t === 'circle') {
+      } else if (t === 'draw' || t === 'arrow' || t === 'rect' || t === 'circle') {
         on('ieSc', 'input', function (e) { P.color = e.target.value; var a = selObj(); if (a && a.t !== 'text') edit(function () { a.c = P.color; }); });
         on('ieSc', 'change', endEdit);
         on('ieLw', 'input', function (e) { P.lw = +e.target.value; setVal('ieLwV', String(P.lw)); var a = selObj(); if (a && a.t !== 'text') edit(function () { a.lw = lwPx(); }); });
@@ -759,6 +797,19 @@
         });
         on('ieImgO', 'change', endEdit);
         on('ieDelSel', 'click', delSel);
+      } else if (t === 'sticker') {
+        Array.prototype.forEach.call(optsEl.querySelectorAll('[data-sc]'), function (b) {
+          b.addEventListener('click', function () { stickerCategory = b.dataset.sc; renderOpts(); });
+        });
+        Array.prototype.forEach.call(optsEl.querySelectorAll('[data-sticker]'), function (b) {
+          b.addEventListener('click', function () {
+            pushHist();
+            var emoji = b.dataset.sticker, size = S.base.width * (+(($('ieStickerSize') || {}).value || 12)) / 100;
+            var a = { t: 'text', x: 0, y: 0, s: size, c: '#ffffff', b: false, text: emoji };
+            var box = textBox(a); a.x = (S.base.width - box.w) / 2; a.y = (S.base.height - box.h) / 2;
+            S.annots.push(a); S.sel = S.annots.length - 1; render();
+          });
+        });
       } else if (t === 'watermark') {
         Array.prototype.forEach.call(optsEl.querySelectorAll('[data-wt]'), function (b) { b.addEventListener('click', function () { if (S.wm.type !== b.dataset.wt) { pushHist(); S.wm.type = b.dataset.wt; S.wm.on = S.wm.type === 'text' ? !!S.wm.text : !!S.wm.img; renderOpts(); render(); } }); });
         on('ieWmT', 'input', function (e) { if (!optEditing) { pushHist(); optEditing = true; } S.wm.text = e.target.value; S.wm.on = !!S.wm.text; var c = $('ieWmOn'); if (c) c.checked = S.wm.on; render(); });
@@ -827,6 +878,7 @@
     $('ieSel').addEventListener('click', function () { $('ieFile').click(); });
     $('ieCam').addEventListener('click', function () { $('ieCamFile').click(); });
     $('ieChange').addEventListener('click', function () { $('ieFile').click(); });
+    $('ieCancel').addEventListener('click', function () { S.base = null; S.orig = null; S.annots = []; S.sel = -1; hist = []; redo = []; workEl.hidden = true; $('ieResumeRow').hidden = true; say('Editor cleared. Select an image or take a photo to begin.'); if (shared && G && typeof G.getSelected === 'function') { try { var selected = G.getSelected(); if (selected && selected.id != null) { S.itemId = selected.id; } } catch (e) {} } });
     $('ieFile').addEventListener('change', function (e) { loadFile(e.target.files && e.target.files[0]); e.target.value = ''; });
     $('ieCamFile').addEventListener('change', function (e) { loadFile(e.target.files && e.target.files[0]); e.target.value = ''; });
     var dz = $('ieDrop');

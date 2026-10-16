@@ -275,6 +275,8 @@ if (document.body && document.body.getAttribute('data-shared-app') === '1') {
   return c;
  }
  function result(b,name,stats,warn){
+  // Show the compressed candidate in the shared big gallery as a temporary preview; do not replace the source image until the user downloads it.
+  if(window.LovePDFiGallery&&typeof window.LovePDFiGallery.preview==='function')window.LovePDFiGallery.preview(b);
   if(url)URL.revokeObjectURL(url);url=URL.createObjectURL(b);
   $('prev').src=url;
   var d=$('dl');d.href=url;d.setAttribute('data-et-base-name',name);d.download=easyToolsTimestampFilename(name);d.textContent='Download '+name.split('.').pop().toUpperCase();
@@ -305,7 +307,7 @@ if (document.body && document.body.getAttribute('data-shared-app') === '1') {
  var EXT={jpeg:'jpg',png:'png',webp:'webp'};
 
  var mode='size',pct=$('pct');
- function upd(){$('pv').textContent=pct.value;$('est').textContent=file?'→ about '+size(file.size*(1-pct.value/100)):''}
+ function upd(){if($('pv'))$('pv').textContent=pct.value;var est=$('est');if(!est)return;if(!file){est.textContent='';return;}if(mode==='size'){var target=Math.max(0,parseFloat(kb.value)||0);est.textContent=target?'→ target output: about '+target+' KB (visual preview stays full-size; exact file size is confirmed after Compress)':'';}else{est.textContent='→ estimated output: about '+size(file.size*(1-pct.value/100));}}
  pct.oninput=function(){Q('[data-pct]').forEach(function(x){x.setAttribute('aria-pressed',x.dataset.pct===pct.value)});upd()};
  Q('[data-pct]').forEach(function(c){c.onclick=function(){pct.value=c.dataset.pct;pct.oninput()}});
  Q('[data-mode]').forEach(function(c){c.onclick=function(){mode=c.dataset.mode;
@@ -1435,14 +1437,17 @@ var ScanLib=(function(){
    if(!items.length)return;
    if(sel<0||sel>=items.length)sel=0;
    var it=cur();
+   if(previewId!==it.id)clearPreview();
    if(bigUrl)URL.revokeObjectURL(bigUrl);bigUrl=URL.createObjectURL(it.f);
-   cropOff();im.onload=function(){it.w=im.naturalWidth;it.h=im.naturalHeight;drawInfo()};im.onload=function(){drawInfo();setTimeout(updateResizeOverlay,30);if(resizeMode==='crop'&&!crop&&!(cur()&&cur().applied))cropOn();if(pendingReveal){pendingReveal=false;scheduleReveal()}};im.src=bigUrl;drawInfo();
+   cropOff();im.onload=function(){it.w=im.naturalWidth;it.h=im.naturalHeight;drawInfo()};im.onload=function(){drawInfo();setTimeout(updateResizeOverlay,30);if(resizeMode==='crop'&&!crop&&!(cur()&&cur().applied))cropOn();if(pendingReveal){pendingReveal=false;scheduleReveal()}};im.src=(previewId===it.id&&previewUrl)?previewUrl:bigUrl;drawInfo();
    strip.innerHTML=items.map(function(x,i){return '<div class="gal-th'+(i===sel?' on':'')+'" data-i="'+i+'"><img src="'+x.th+'" alt="Image '+(i+1)+'"><button type="button" class="gal-x" data-x="'+i+'" aria-label="Remove image '+(i+1)+'">✕</button></div>'}).join('');
    $('galReset').disabled=!it.edited;var rr=$('resizeRestoreRow');if(rr)rr.hidden=!it.edited;
    notify();
   }
   // ---------- shared-gallery API (used by the Edit tab) ----------
-  var subs=[];
+  var subs=[], previewUrl=null, previewId=null;
+  function clearPreview(){if(previewUrl){URL.revokeObjectURL(previewUrl);previewUrl=null;}previewId=null;}
+  function previewBlob(blob){var it=cur();if(!it||!blob)return false;clearPreview();previewUrl=URL.createObjectURL(blob);previewId=it.id;im.onload=function(){drawInfo();};im.src=previewUrl;var tag=document.getElementById('galPreviewNote');if(!tag){tag=document.createElement('div');tag.id='galPreviewNote';tag.style.cssText='margin:8px auto;padding:8px 10px;border-radius:10px;background:#eaf3ff;color:#174b85;text-align:center;font-size:13px;font-weight:600';box.insertBefore(tag,strip);}tag.textContent='LIVE COMPRESSION PREVIEW · output '+size(blob.size)+' · not saved yet. Download to keep this result, or change the target size to preview again.';tag.hidden=false;return true;}
   function curInfo(){var it=cur();return it?{id:it.id,f:it.f,orig:it.orig,name:it.f.name,type:it.f.type}:null}
   function notify(){var c=curInfo();subs.forEach(function(fn){try{fn(c)}catch(e){}})}
   async function setCanvas(id,canvas){
@@ -1587,7 +1592,7 @@ var ScanLib=(function(){
   });
   ['dragover','dragenter'].forEach(function(v){box.addEventListener(v,function(e){e.preventDefault()})});
   box.addEventListener('drop',function(e){e.preventDefault();add(Array.prototype.slice.call(e.dataTransfer.files))});
-  return {add:add,clear:clearAll,cropFor:cropFor,shown:shown,current:curInfo,setCanvas:setCanvas,onChange:function(fn){subs.push(fn)}};
+  return {add:add,clear:clearAll,cropFor:cropFor,shown:shown,current:curInfo,setCanvas:setCanvas,preview:previewBlob,clearPreview:clearPreview,onChange:function(fn){subs.push(fn)}};
  })();
  window.LovePDFiGallery=GAL;
  function pick(f){GAL.add(f?[f]:[])}
