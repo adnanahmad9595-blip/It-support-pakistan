@@ -1,30 +1,132 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>LovePDFi Image Studio — Compress, Resize, Crop & Edit</title><meta name="description" content="Compress, resize, crop, rotate and edit images in one shared gallery. Preview changes before downloading."><style>
 :root{--blue:#2563eb;--ink:#172033;--muted:#667085;--line:#e3e8f0;--bg:#f5f7fb;--card:#fff}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,Segoe UI,Arial,sans-serif}.wrap{max-width:1100px;margin:auto;padding:18px}.top{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px}.brand{font-weight:850;font-size:22px;letter-spacing:-.5px}.brand span{color:var(--blue)}.sub{color:var(--muted);font-size:13px}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 5px 18px #18274408}.tabs,.row,.actions,.thumbs,.presets,.colors{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.tabs button{flex:1;min-width:100px}.btn,button,select,input{font:inherit}button,.btn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:10px;padding:10px 13px;cursor:pointer;font-weight:650}button:hover{border-color:#9db7f9}button.active,.primary{background:var(--blue);color:#fff;border-color:var(--blue)}button:disabled{opacity:.45;cursor:not-allowed}label{display:block;font-size:13px;color:var(--muted);font-weight:650;margin-bottom:5px}input[type=number],select,input[type=text]{border:1px solid var(--line);border-radius:9px;padding:9px;background:#fff;max-width:100%}.gallery{min-height:290px;background:linear-gradient(45deg,#f1f4f9 25%,transparent 25%),linear-gradient(-45deg,#f1f4f9 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#f1f4f9 75%),linear-gradient(-45deg,transparent 75%,#f1f4f9 75%);background-size:20px 20px;background-position:0 0,0 10px,10px -10px,-10px 0;border:1px dashed #cbd5e1;border-radius:13px;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;padding:12px}.gallery canvas{max-width:100%;max-height:60vh;object-fit:contain;display:block}.empty{text-align:center;color:var(--muted);padding:50px 12px}.thumbs{margin-top:12px;overflow-x:auto}.thumb{width:70px;height:64px;object-fit:contain;border:2px solid transparent;background:#f8fafc;border-radius:8px;padding:3px;cursor:pointer}.thumb.active{border-color:var(--blue)}.toolpanel{scroll-margin-top:14px}.controls{display:flex;gap:12px;flex-wrap:wrap;align-items:end;margin:12px 0}.field{min-width:120px}.field.grow{flex:1}.hint{font-size:12px;color:var(--muted);margin-top:7px}.status{font-size:13px;color:#155e35;background:#eaf8ef;border-radius:8px;padding:8px 10px;display:none;margin-top:10px}.danger{color:#b42318}.palette{width:28px;height:28px;border-radius:50%;padding:0;border:2px solid #fff;box-shadow:0 0 0 1px #cbd5e1}.palette.sel{box-shadow:0 0 0 2px var(--blue)}.hidden{display:none!important}.cropbox{position:absolute;border:2px dashed #2563eb;background:#2563eb12;touch-action:none;cursor:move;display:none}.cropbox:after{content:'↘';position:absolute;right:-8px;bottom:-10px;background:var(--blue);color:white;border-radius:4px;padding:1px 4px;font-size:12px}.pill{background:#eff6ff;color:#1d4ed8;padding:5px 9px;border-radius:99px;font-size:12px;font-weight:700}.footer{color:var(--muted);font-size:12px;text-align:center;padding:15px}
-/* Deliberate editor layout: gallery, single rotate, thumbnails, then a distinct tool dock */
+/* Deliberate editor layout matching the hand sketch:
+   Select/Take/Clear → Big gallery → Rotate button → tool rows → Restore / Save / Download */
 #toolPanel{border:1px solid #d8e2f3;background:linear-gradient(180deg,#fff 0%,#f9fbff 100%);box-shadow:0 10px 28px #1e3a8a0c;padding:18px}
-#toolPanel h2{font-size:20px;letter-spacing:-.35px;color:#14213d}
+#toolPanel h2{font-size:20px;letter-spacing:-.35px;color:#14213d;margin:0 0 4px}
 #toolPanel .sub{max-width:720px}
-#editPanel>.controls:first-of-type{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-top:16px}
-#editPanel [data-edit]{min-height:66px;padding:10px 6px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:#fff;border:1px solid #dce4f0;border-radius:12px;font-size:12px;white-space:normal;box-shadow:0 2px 5px #17203308}
-#editPanel [data-edit]::before{font-size:20px;line-height:1.1}
-#editPanel [data-edit="crop"]::before{content:'▧'} #editPanel [data-edit="flipH"]::before{content:'⇋'} #editPanel [data-edit="flipV"]::before{content:'⇵'} #editPanel [data-edit="text"]::before{content:'T'} #editPanel [data-edit="draw"]::before{content:'✎'} #editPanel [data-edit="rectangle"]::before{content:'▱'} #editPanel [data-edit="circle"]::before{content:'◯'} #editPanel [data-edit="arrow"]::before{content:'➜'} #editPanel [data-edit="blur"]::before{content:'◌'} #editPanel [data-edit="brightness"]::before{content:'☼'} #editPanel [data-edit="contrast"]::before{content:'◐'} #editPanel [data-edit="watermark"]::before{content:'◇'} #editPanel [data-edit="overlay"]::before{content:'▧+'} #editPanel [data-edit="sticker"]::before{content:'★'}
-#editPanel [data-edit]:focus,#editPanel [data-edit].active{background:#eaf1ff;border-color:#2563eb;color:#1d4ed8;outline:none}
-#editOptions{margin-top:14px;padding:14px;border:1px solid #dbe5f4;background:#f5f8ff;border-radius:13px}
+/* Main tool grid – 4 columns like the sketch rows */
+#editPanel .edit-tools{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:10px;
+  margin:16px 0 8px;
+}
+#editPanel .edit-tools button,
+#editPanel [data-edit]{
+  min-height:68px;
+  padding:10px 6px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  background:#fff;
+  border:1.5px solid #d0dae8;
+  border-radius:14px;
+  font-size:12.5px;
+  font-weight:650;
+  white-space:normal;
+  box-shadow:0 2px 6px #1720330a;
+  line-height:1.15;
+  text-align:center;
+}
+#editPanel .edit-tools button::before,
+#editPanel [data-edit]::before{
+  font-size:22px;
+  line-height:1.1;
+  display:block;
+}
+/* Icons matching sketch order */
+#editPanel [data-edit="crop"]::before{content:'▧'}
+#editPanel [data-edit="flipH"]::before{content:'⇋'}
+#editPanel [data-edit="flipV"]::before{content:'⇵'}
+#editPanel [data-edit="text"]::before{content:'T'}
+#editPanel [data-edit="arrow"]::before{content:'➜'}
+#editPanel [data-edit="rectangle"]::before{content:'▭'}
+#editPanel [data-edit="circle"]::before{content:'◯'}
+#editPanel [data-edit="blur"]::before{content:'◌'}
+#editPanel [data-edit="brightness"]::before{content:'☀'}
+#editPanel [data-edit="contrast"]::before{content:'◐'}
+#editPanel [data-edit="watermark"]::before{content:'◇'}
+#editPanel [data-edit="overlay"]::before{content:'⧉'}
+#editPanel [data-edit="draw"]::before{content:'✎'}
+#editPanel [data-edit="sticker"]::before{content:'★'}
+#editPanel [data-edit]:focus,
+#editPanel [data-edit].active{
+  background:#eaf1ff;
+  border-color:#2563eb;
+  color:#1d4ed8;
+  outline:none;
+  box-shadow:0 0 0 3px #2563eb22;
+}
+/* Bottom action row (Restore + Download) */
+#editPanel .edit-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:14px;
+  align-items:center;
+}
+#editPanel .edit-actions .primary{
+  min-width:160px;
+}
+#editOptions{
+  margin-top:14px;
+  padding:14px;
+  border:1px solid #dbe5f4;
+  background:#f5f8ff;
+  border-radius:13px;
+}
 #cropOptions,#drawOptions,#textOptions,#watermarkOptions,#stickerOptions,#overlayOptions{padding:3px}
-#rotateBtn{min-width:180px;font-weight:750;border-radius:999px;box-shadow:0 3px 8px #17203310}
+/* Big prominent Rotate button under the gallery */
+#rotateBtn{
+  min-width:200px;
+  font-weight:750;
+  border-radius:999px;
+  box-shadow:0 3px 10px #17203314;
+  padding:11px 20px;
+}
 #thumbs{padding:2px 0 6px}
 #cancelBtn{border-color:#f1c7c7;color:#a12626;background:#fffafa}
-@media(max-width:600px){#toolPanel{padding:12px}#editPanel>.controls:first-of-type{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}#editPanel [data-edit]{min-height:62px;font-size:11px}#rotateBtn{width:100%}}@media(max-width:600px){.wrap{padding:10px}.card{padding:12px}.gallery{min-height:220px}.tabs button{min-width:75px;padding:9px 6px}.controls{gap:9px}.field{min-width:105px}}
+@media(max-width:600px){
+  #toolPanel{padding:12px}
+  #editPanel .edit-tools{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  #editPanel .edit-tools button,#editPanel [data-edit]{min-height:60px;font-size:11px;padding:8px 4px}
+  #rotateBtn{width:100%}
+}
+@media(max-width:600px){.wrap{padding:10px}.card{padding:12px}.gallery{min-height:220px}.tabs button{min-width:75px;padding:9px 6px}.controls{gap:9px}.field{min-width:105px}}
 </style></head><body><main class="wrap"><header class="top"><div><div class="brand">LovePDF<span>i</span> Image Studio</div><div class="sub">One gallery. Every image tool. Preview before download.</div></div><a href="./index.html" class="btn" style="text-decoration:none">← All tools</a></header>
-<section class="card"><div class="tabs" id="toolTabs"><button class="active" data-tool="compress">Compress</button><button data-tool="convert">Convert</button><button data-tool="resize">Resize</button><button data-tool="edit">Edit</button></div><div class="controls"><button class="primary" id="addBtn">＋ Add Images</button><button id="cameraBtn">📷 Take Photo</button><button id="cancelBtn">✕ Cancel / Clear</button><input id="fileInput" type="file" accept="image/*" multiple hidden><input id="cameraInput" type="file" accept="image/*" capture="environment" hidden><span class="sub" id="fileCount">No image selected</span></div><div class="gallery" id="gallery"><div class="empty" id="empty">Choose an image to begin.<br><small>Your original stays untouched until you download.</small></div><canvas id="preview" class="hidden"></canvas><div id="cropBox" class="cropbox"></div></div><div class="row" style="margin-top:10px"><button id="rotateBtn" disabled>↻ Rotate 90°</button><span class="sub">One tap rotates the selected image 90° clockwise.</span></div><div class="thumbs" id="thumbs"></div></section>
+<section class="card"><div class="tabs" id="toolTabs"><button class="active" data-tool="compress">Compress</button><button data-tool="convert">Convert</button><button data-tool="resize">Resize</button><button data-tool="edit">Edit</button></div><div class="controls"><button class="primary" id="addBtn">🖼 Select Image</button><button id="cameraBtn">📷 Take Photo</button><button id="cancelBtn">✕ Clear</button><input id="fileInput" type="file" accept="image/*" multiple hidden><input id="cameraInput" type="file" accept="image/*" capture="environment" hidden><span class="sub" id="fileCount">No image selected</span></div><div class="gallery" id="gallery"><div class="empty" id="empty">Choose an image to begin.<br><small>Your original stays untouched until you download.</small></div><canvas id="preview" class="hidden"></canvas><div id="cropBox" class="cropbox"></div></div><div class="row" style="margin-top:10px"><button id="rotateBtn" disabled>↻ Rotate Button</button><span class="sub">Rotate the selected image 90° clockwise.</span></div><div class="thumbs" id="thumbs"></div></section>
 <section class="card toolpanel" id="toolPanel"><div id="compressPanel"><h2 style="margin:0 0 5px">Compress image</h2><div class="sub">Choose a target size to see a temporary preview in the large gallery. Nothing is saved until Download.</div><div class="controls"><div class="field"><label for="targetKB">Target file size</label><select id="targetKB"><option value="50">50 KB</option><option value="100">100 KB</option><option value="200" selected>200 KB</option><option value="500">500 KB</option><option value="0">Best quality</option></select></div><div class="field"><label for="quality">Quality</label><input id="quality" type="range" min="10" max="100" value="85"><span id="qualityVal">85%</span></div><button class="primary" id="compressBtn">Preview compression</button></div><div id="compressInfo" class="hint">Select a target size and press Preview compression.</div></div>
 <div id="convertPanel" class="hidden"><h2 style="margin:0 0 5px">Convert format</h2><div class="controls"><div class="field"><label>Output format</label><select id="format"><option value="image/jpeg">JPG</option><option value="image/png">PNG</option><option value="image/webp">WebP</option></select></div><button class="primary" id="convertBtn">Preview conversion</button></div><div class="hint">Preview appears in the gallery; download when satisfied.</div></div>
 <div id="resizePanel" class="hidden"><h2 style="margin:0 0 5px">Resize image</h2><div class="controls"><div class="field"><label>Width (px)</label><input type="number" id="width" min="1" max="12000" placeholder="Width"></div><div class="field"><label>Height (px)</label><input type="number" id="height" min="1" max="12000" placeholder="Height"></div><div class="field"><label>Fit mode</label><select id="fit"><option value="contain">Fit (preserve ratio)</option><option value="stretch">Stretch</option></select></div><button class="primary" id="resizeBtn">Preview resize</button></div></div>
-<div id="editPanel" class="hidden"><h2 style="margin:0 0 5px">Edit image</h2><div class="controls"><button data-edit="crop">Crop</button><button data-edit="flipH">Flip H</button><button data-edit="flipV">Flip V</button><button data-edit="text">Text</button><button data-edit="draw">Draw</button><button data-edit="rectangle">Rectangle</button><button data-edit="circle">Circle</button><button data-edit="arrow">Arrow</button><button data-edit="blur">Blur</button><button data-edit="brightness">Brightness</button><button data-edit="contrast">Contrast</button><button data-edit="watermark">Watermark</button><button data-edit="overlay">Add image on image</button><button data-edit="sticker">Sticker</button></div>
+<div id="editPanel" class="hidden"><h2>EDIT</h2>
+<p class="sub" style="margin:0 0 4px">Crop, flip, draw, adjust and watermark the selected image. All changes stay on this device until you download.</p>
+<div class="edit-tools">
+  <button data-edit="crop">Crop</button>
+  <button data-edit="flipH">Flip</button>
+  <button data-edit="text">Text</button>
+  <button data-edit="arrow">Arrow</button>
+  <button data-edit="rectangle">Rectangle</button>
+  <button data-edit="circle">Circle</button>
+  <button data-edit="blur">Blur</button>
+  <button data-edit="brightness">Brightness</button>
+  <button data-edit="contrast">Contrast</button>
+  <button data-edit="watermark">Watermark</button>
+  <button data-edit="overlay">Add Image on Image</button>
+  <button data-edit="draw">Draw</button>
+  <button data-edit="flipV">Flip V</button>
+  <button data-edit="sticker">Sticker</button>
+</div>
 <div id="editOptions" class="hidden"><div class="controls" id="cropOptions"><div class="field"><label>Crop preset</label><select id="cropPreset"><option value="free">Free crop</option><option value="1:1">Square 1:1</option><option value="4:3">4:3</option><option value="3:4">3:4</option><option value="16:9">Landscape 16:9</option><option value="9:16">Portrait 9:16</option><option value="passport">Passport</option></select></div><button class="primary" id="applyCrop">Save Crop</button><span class="hint">No crop box appears until a preset is selected. Drag the box; drag its lower-right corner to resize.</span></div>
 <div id="drawOptions" class="hidden"><div class="controls"><div><label>Color</label><div class="colors" id="colors"><button class="palette sel" data-color="#ff2d55" style="background:#ff2d55"></button><button class="palette" data-color="#2563eb" style="background:#2563eb"></button><button class="palette" data-color="#16a34a" style="background:#16a34a"></button><button class="palette" data-color="#111827" style="background:#111827"></button><button class="palette" data-color="#f59e0b" style="background:#f59e0b"></button><input type="color" id="customColor" value="#ff2d55" aria-label="Custom color"></div></div><div class="field"><label>Thickness / blur strength</label><input type="range" id="thickness" min="2" max="60" value="8"></div></div></div>
 <div id="textOptions" class="hidden controls"><input id="textValue" type="text" placeholder="Text to add"><button id="addText" class="primary">Add text</button></div><div id="watermarkOptions" class="hidden controls"><input id="watermarkValue" type="text" placeholder="Watermark text"><button id="addWatermark" class="primary">Apply watermark</button></div><div id="stickerOptions" class="hidden"><div class="controls"><div class="field"><label>Sticker category</label><select id="stickerCategory"><option value="smile">Smileys</option><option value="hearts">Hearts</option><option value="nature">Nature</option><option value="symbols">Symbols</option><option value="animals">Animals</option></select></div></div><div class="controls" id="stickerChoices"></div></div><div id="overlayOptions" class="hidden controls"><button id="overlayBtn" class="primary">Choose overlay image</button><input id="overlayInput" type="file" accept="image/*" hidden></div></div>
-<div class="controls"><button id="restoreBtn">↺ Restore original</button><button class="primary" id="downloadBtn" disabled>⬇ Download result</button><span class="hint" id="editHint">Choose an edit tool to show its controls.</span></div></div><div id="status" class="status"></div></section><div class="footer">Processing happens in your browser. Preview changes are temporary until you download.</div></main>
+<div class="edit-actions">
+  <button id="restoreBtn">↺ Restore</button>
+  <button class="primary" id="downloadBtn" disabled>⬇ Download Images</button>
+  <span class="hint" id="editHint">Choose an edit tool above to show its options.</span>
+</div></div><div id="status" class="status"></div></section><div class="footer">Processing happens in your browser. Preview changes are temporary until you download.</div></main>
 <script>
 (()=>{'use strict';const $=id=>document.getElementById(id);let items=[],active=0,tool='compress',editMode='',baseImg=null,baseCanvas=null,resultCanvas=null,rot=0,flipH=false,flipV=false,drawColor='#ff2d55',drawing=false,start=null,previewURL=null,cropRect=null,dragCrop=false,cropResize=false,cropStart=null,overlayImg=null;const canvas=$('preview'),ctx=canvas.getContext('2d',{willReadFrequently:true}),gallery=$('gallery');function msg(t){$('status').textContent=t;$('status').style.display='block'}function hideMsg(){$('status').style.display='none'}function activeItem(){return items[active]}function setCanvasSize(w,h){canvas.width=Math.max(1,Math.round(w));canvas.height=Math.max(1,Math.round(h))}function loadImage(file){return new Promise((resolve,reject)=>{const im=new Image();im.onload=()=>resolve(im);im.onerror=reject;im.src=URL.createObjectURL(file)})}function drawImageFit(im,w,h,fit='contain'){setCanvasSize(w,h);ctx.clearRect(0,0,w,h);if(fit==='stretch'){ctx.drawImage(im,0,0,w,h)}else{const r=Math.min(w/im.width,h/im.height),dw=im.width*r,dh=im.height*r;ctx.drawImage(im,(w-dw)/2,(h-dh)/2,dw,dh)}}async function addFiles(files){for(const f of files){if(!f.type.startsWith('image/'))continue;try{const im=await loadImage(f);items.push({file:f,img:im,original:im,rot:0,flipH:false,flipV:false,edits:[],result:null});}catch(e){}}if(items.length){active=items.length-1;renderThumbs();showOriginal();$('rotateBtn').disabled=false;$('fileCount').textContent=items.length+' image'+(items.length===1?'':'s');$('downloadBtn').disabled=false;scrollPanel();hideMsg()}}function renderThumbs(){const el=$('thumbs');el.innerHTML='';items.forEach((it,i)=>{const im=document.createElement('img');im.className='thumb'+(i===active?' active':'');im.src=it.img.src;im.alt='Image '+(i+1);im.onclick=()=>{active=i;renderThumbs();showOriginal();resetToolPreview()};el.appendChild(im)})}function dimensions(it=activeItem()){if(!it)return[1,1];return it.rot%180?[it.img.height,it.img.width]:[it.img.width,it.img.height]}function showOriginal(){const it=activeItem();if(!it)return;$('empty').classList.add('hidden');canvas.classList.remove('hidden');rot=it.rot;flipH=it.flipH;flipV=it.flipV;const [w,h]=dimensions(it);setCanvasSize(w,h);ctx.save();ctx.translate(w/2,h/2);ctx.rotate(rot*Math.PI/180);ctx.scale(flipH?-1:1,flipV?-1:1);ctx.drawImage(it.img,-it.img.width/2,-it.img.height/2);ctx.restore();baseCanvas=document.createElement('canvas');baseCanvas.width=canvas.width;baseCanvas.height=canvas.height;baseCanvas.getContext('2d').drawImage(canvas,0,0);resultCanvas=null;clearCrop();$('compressInfo').textContent='Original: '+formatBytes(it.file.size)+' · Choose a target and preview.';$('downloadBtn').disabled=false}function formatBytes(n){return n<1024?n+' B':(n/1024).toFixed(1)+' KB'}function scrollPanel(){setTimeout(()=>$('toolPanel').scrollIntoView({behavior:'smooth',block:'start'}),120)}function resetToolPreview(){showOriginal();hideMsg()}function getSourceCanvas(){return resultCanvas||baseCanvas}function blobOf(c,type='image/jpeg',quality=.85){return new Promise(res=>c.toBlob(res,type,quality))}async function compressPreview(){const it=activeItem();if(!it)return;const target=+$('targetKB').value*1024;let q=+$('quality').value/100;let c=baseCanvas;let b=await blobOf(c,'image/jpeg',q);if(target>0){for(let i=0;i<14&&b&&b.size>target&&q>.12;i++){q=Math.max(.12,q-.06);b=await blobOf(c,'image/jpeg',q)}if(b&&b.size>target){let scale=Math.sqrt(target/b.size)*.94;for(let j=0;j<8&&b.size>target;j++){const tmp=document.createElement('canvas');tmp.width=Math.max(1,Math.round(c.width*scale));tmp.height=Math.max(1,Math.round(c.height*scale));tmp.getContext('2d').drawImage(c,0,0,tmp.width,tmp.height);c=tmp;b=await blobOf(c,'image/jpeg',Math.max(.12,q));if(b.size>target)scale*=.88}}}if(!b)return;await displayBlob(b);resultCanvas=await blobToCanvas(b);$('compressInfo').innerHTML='Preview output: <b>'+formatBytes(b.size)+'</b> · Target: '+(target?formatBytes(target):'best quality')+' · Quality setting: '+Math.round(q*100)+'%'+(target&&b.size>target?' · Target not fully reached at this image’s dimensions.':'');msg('Temporary compression preview ready. Original file has not been changed.')}function blobToCanvas(blob){return new Promise(res=>{const u=URL.createObjectURL(blob),im=new Image();im.onload=()=>{const c=document.createElement('canvas');c.width=im.width;c.height=im.height;c.getContext('2d').drawImage(im,0,0);URL.revokeObjectURL(u);res(c)};im.src=u})}async function displayBlob(b){if(previewURL)URL.revokeObjectURL(previewURL);previewURL=URL.createObjectURL(b);const im=await loadImage(b);setCanvasSize(im.width,im.height);ctx.drawImage(im,0,0);$('empty').classList.add('hidden');canvas.classList.remove('hidden')}function showResult(c){resultCanvas=c;setCanvasSize(c.width,c.height);ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(c,0,0);$('empty').classList.add('hidden');canvas.classList.remove('hidden')}function changeTool(next){tool=next;document.querySelectorAll('#toolTabs button').forEach(b=>b.classList.toggle('active',b.dataset.tool===next));['compress','convert','resize','edit'].forEach(n=>$ (n+'Panel').classList.toggle('hidden',n!==next));clearCrop();if(next==='resize'&&activeItem()){const [w,h]=dimensions();$('width').value=w;$('height').value=h}scrollPanel()}function clearCrop(){cropRect=null;$('cropBox').style.display='none'}function startCrop(){const p=$('cropPreset').value;const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)return;let ratio=null;if(p==='1:1')ratio=1;else if(p==='4:3')ratio=4/3;else if(p==='3:4'||p==='passport')ratio=3/4;else if(p==='16:9')ratio=16/9;else if(p==='9:16')ratio=9/16;let cw=w*.72,ch=h*.72;if(ratio){if(cw/ch>ratio)cw=ch*ratio;else ch=cw/ratio}cropRect={x:(w-cw)/2,y:(h-ch)/2,w:cw,h:ch};positionCrop();$('cropBox').style.display='block'}function positionCrop(){if(!cropRect)return;const b=$('cropBox');Object.assign(b.style,{display:'block',left:cropRect.x+'px',top:cropRect.y+'px',width:cropRect.w+'px',height:cropRect.h+'px'})}function pos(e){const r=gallery.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}}$('cropBox').addEventListener('pointerdown',e=>{if(!cropRect)return;e.preventDefault();const p=pos(e);cropResize=(p.x>cropRect.x+cropRect.w-18&&p.y>cropRect.y+cropRect.h-18);dragCrop=!cropResize;cropStart={...p,rect:{...cropRect}};$('cropBox').setPointerCapture(e.pointerId)});$('cropBox').addEventListener('pointermove',e=>{if(!cropStart)return;const p=pos(e),dx=p.x-cropStart.x,dy=p.y-cropStart.y;if(cropResize){cropRect.w=Math.max(30,cropStart.rect.w+dx);cropRect.h=Math.max(30,cropStart.rect.h+dy)}else{cropRect.x=Math.max(0,Math.min(gallery.clientWidth-cropRect.w,cropStart.rect.x+dx));cropRect.y=Math.max(0,Math.min(gallery.clientHeight-cropRect.h,cropStart.rect.y+dy))}positionCrop()});$('cropBox').addEventListener('pointerup',()=>{cropStart=null;dragCrop=false;cropResize=false});
 function applyCrop(){if(!cropRect||!baseCanvas)return msg('Choose a crop preset first.');const r=canvas.getBoundingClientRect(),g=gallery.getBoundingClientRect();const sx=baseCanvas.width/canvas.clientWidth,sy=baseCanvas.height/canvas.clientHeight;let x=Math.max(0,(cropRect.x-(r.left-g.left))*sx),y=Math.max(0,(cropRect.y-(r.top-g.top))*sy),w=Math.min(baseCanvas.width-x,cropRect.w*sx),h=Math.min(baseCanvas.height-y,cropRect.h*sy);const c=document.createElement('canvas');c.width=Math.max(1,Math.round(w));c.height=Math.max(1,Math.round(h));c.getContext('2d').drawImage(baseCanvas,x,y,w,h,0,0,c.width,c.height);showResult(c);clearCrop();msg('Crop preview ready. Download result to save it.')}function editAction(action){if(!activeItem())return;editMode=action;['cropOptions','drawOptions','textOptions','watermarkOptions','stickerOptions','overlayOptions'].forEach(id=>$(id).classList.add('hidden'));$('editOptions').classList.remove('hidden');if(action==='crop'){$('cropOptions').classList.remove('hidden');clearCrop()}else if(['draw','rectangle','circle','arrow','blur'].includes(action)){$('drawOptions').classList.remove('hidden');$('editHint').textContent=action==='blur'?'Drag over the area to blur; thickness controls blur strength.':'Drag on the image to apply '+action+'.'}else if(action==='text')$('textOptions').classList.remove('hidden');else if(action==='watermark')$('watermarkOptions').classList.remove('hidden');else if(action==='sticker'){$('stickerOptions').classList.remove('hidden');renderStickers()}else if(action==='overlay')$('overlayOptions').classList.remove('hidden');else if(action==='flipH'||action==='flipV'){const c=document.createElement('canvas');c.width=baseCanvas.width;c.height=baseCanvas.height;const x=c.getContext('2d');x.translate(action==='flipH'?c.width:0,action==='flipV'?c.height:0);x.scale(action==='flipH'?-1:1,action==='flipV'?-1:1);x.drawImage(getSourceCanvas(),0,0);showResult(c);msg('Flip preview ready.')}else if(action==='brightness'||action==='contrast'){const val=action==='brightness'?1.15:1.18;const c=document.createElement('canvas');c.width=baseCanvas.width;c.height=baseCanvas.height;const x=c.getContext('2d');x.filter=action==='brightness'?'brightness(115%)':'contrast(118%)';x.drawImage(getSourceCanvas(),0,0);showResult(c);msg(action+' preview ready.')}}
