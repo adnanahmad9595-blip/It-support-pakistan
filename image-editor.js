@@ -1,7 +1,8 @@
 /* LovePDFi Image Editor
  * Loaded on demand by tools.js the first time the "Edit" tab is opened.
  * Everything runs in the browser; the photo never leaves the device.
- * Tools: Crop, Rotate, Flip, Text, Arrow, Rectangle, Circle, Blur, Brightness, Contrast, Watermark, Add image.
+ * Layout (matches the hand sketch): Select / Take photo / Clear -> big picture -> Rotate button -> tool grid -> tool options -> Restore / Save / Download.
+ * Tools: Crop, Rotate, Flip, Text, Draw, Arrow, Rectangle, Circle, Blur, Brightness, Contrast, Watermark, Add image, Sticker.
  * Every action applies instantly and is auto-saved on this device. After Download a confirmation panel appears;
  * a storage backend can later be plugged in via window.LovePDFiStorage.save(blob, meta).
  * When window.LovePDFiGallery exists the editor uses the SHARED image gallery (same one as Compress / Resize / Convert):
@@ -17,8 +18,14 @@
   var CSS = [
     '.ie [hidden]{display:none!important}',
     '.ie-note{text-align:center;margin:0 0 12px}',
-    '.ie-toolbar{display:flex;gap:8px;overflow-x:auto;padding:6px 2px 10px;margin:12px 0 0;-webkit-overflow-scrolling:touch;scrollbar-width:thin}',
-    '.ie-toolbar .chip{flex:0 0 auto;white-space:nowrap}',
+    '.ie-rotate-row{display:flex;justify-content:center;margin:10px 0 6px}',
+    '.ie-rotate-row .btn{width:100%;max-width:520px;min-height:46px;font-size:16px}',
+    '.ie-toolbar{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:10px 0 8px;padding:12px;background:var(--soft,#f1f5fb);border:1px solid var(--line,#e0e7f1);border-radius:16px}',
+    '.ie-toolbar .chip{display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:0;min-height:66px;padding:8px 4px!important;border-radius:14px!important;font-size:13px!important;line-height:1.2;text-align:center;white-space:normal;word-break:break-word}',
+    '.ie-toolbar .ie-ti{font-size:22px;line-height:1}',
+    '@media(max-width:520px){.ie-toolbar{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:10px}.ie-toolbar .chip{min-height:62px}}',
+    '.ie-actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:10px 0}',
+    '.ie-actions .btn{flex:1 1 150px;max-width:260px;min-height:46px}',
     '.ie-upload-actions{justify-content:center;gap:10px;flex-wrap:wrap}',
     '.ie-upload-actions .btn{min-width:145px}',
     '.ie-stagewrap{display:flex;justify-content:center;margin:10px 0}',
@@ -43,7 +50,7 @@
   ].join('\n');
 
   var TOOLS = [
-    ['crop', '✂ Crop'], ['rotate', '↻ Rotate'], ['flip', '⇋ Flip'], ['text', 'T Text'], ['draw', '✎ Draw'], ['arrow', '➚ Arrow'],
+    ['crop', '✂ Crop'], ['flip', '⇋ Flip'], ['text', 'T Text'], ['draw', '✎ Draw'], ['arrow', '➚ Arrow'],
     ['rect', '▭ Rectangle'], ['circle', '◯ Circle'], ['blur', '▒ Blur'], ['brightness', '☀ Brightness'],
     ['contrast', '◐ Contrast'], ['watermark', '© Watermark'], ['image', '🖼 Add image'], ['sticker', '✨ Sticker']
   ];
@@ -59,18 +66,19 @@
     '<div class="ie-row" id="ieResumeRow" hidden><button type="button" class="chip" id="ieResume">↺ Resume last edit</button></div>' +
     '<p class="ie-hint" id="ieMsg" role="status" hidden></p>' +
     '<div id="ieWork" hidden>' +
-    '<div class="ie-toolbar" id="ieTools" role="toolbar" aria-label="Editing tools"></div>' +
     '<div class="ie-stagewrap"><div class="ie-stage"><canvas id="ieCv" aria-label="Image being edited"></canvas></div></div>' +
+    '<div class="ie-rotate-row"><button type="button" class="btn" id="ieRotate">↻ Rotate</button></div>' +
+    '<div class="ie-toolbar" id="ieTools" role="toolbar" aria-label="Editing tools"></div>' +
     '<div class="ie-opts" id="ieOpts"></div>' +
     '<div class="ie-row" id="ieHistory">' +
     '<button type="button" class="chip" id="ieUndo" disabled>↶ Undo</button>' +
     '<button type="button" class="chip" id="ieRedo" disabled>↷ Redo</button>' +
-    '<button type="button" class="chip" id="ieReset">⟲ Restore image</button>' +
+    '<button type="button" class="chip" id="ieReset">⟲ Restore</button>' +
     '<button type="button" class="chip" id="ieChange">⬆ Change image</button></div>' +
     '<div class="ie-row" role="group" aria-label="Save as"><span style="font-weight:500">Save as:</span><div class="seg" id="ieFmt">' +
     '<button type="button" data-f="png" aria-pressed="true">PNG</button><button type="button" data-f="jpeg" aria-pressed="false">JPG</button><button type="button" data-f="webp" aria-pressed="false">WebP</button></div></div>' +
     '<div class="ie-row" id="ieQrow" hidden><label>Quality <input type="range" id="ieQ" min="40" max="100" value="92"> <span class="ie-val" id="ieQv">92%</span></label></div>' +
-    '<div class="ie-row"><button type="button" class="btn dl" id="ieSave">⬇ Download edited image</button></div>' +
+    '<div class="ie-actions"><button type="button" class="btn" id="ieSaveKeep">💾 Save</button><button type="button" class="btn dl" id="ieSave">⬇ Download Image</button></div>' +
     '<div class="ie-done" id="ieDone" role="status" hidden><strong>✓ Download started</strong><span id="ieDoneT"></span>' +
     '<div class="ie-row"><button type="button" class="btn dl" id="ieAgain">⬇ Download again</button><button type="button" class="chip" id="ieKeep">✎ Keep editing</button></div></div>' +
     '<p class="ie-info" id="ieInfo" role="status"></p>' +
@@ -91,6 +99,7 @@
       root.querySelector('.actions').hidden = true;
       root.querySelector('#ieDrop').hidden = true;
       root.querySelector('#ieChange').hidden = true;
+      root.querySelector('#ieCancelRow').hidden = true;   // the gallery's own Clear button is used
     }
 
     function $(id) { return root.querySelector('#' + id); }
@@ -155,7 +164,7 @@
         // Auto-scroll to the editor tools after an image is loaded, including
         // when the image comes from the shared gallery above this panel.
         window.setTimeout(function () {
-          var target = $('ieTools') || workEl;
+          var target = root.querySelector('.ie-stagewrap') || workEl;
           if (!target || workEl.hidden) return;
           try { target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
           catch (e) { target.scrollIntoView(true); }
@@ -871,7 +880,10 @@
     var tb = $('ieTools');
     TOOLS.forEach(function (t) {
       var b = document.createElement('button');
-      b.type = 'button'; b.className = 'chip'; b.dataset.t = t[0]; b.textContent = t[1]; b.setAttribute('aria-pressed', 'false');
+      b.type = 'button'; b.className = 'chip'; b.dataset.t = t[0]; b.setAttribute('aria-pressed', 'false');
+      var sp = t[1].indexOf(' '), ic = document.createElement('span'), lb = document.createElement('span');
+      ic.className = 'ie-ti'; ic.setAttribute('aria-hidden', 'true'); ic.textContent = t[1].slice(0, sp); lb.textContent = t[1].slice(sp + 1);
+      b.appendChild(ic); b.appendChild(lb);
       b.addEventListener('click', function () { setTool(t[0]); });
       tb.appendChild(b);
     });
@@ -889,6 +901,12 @@
     $('ieUndo').addEventListener('click', undo);
     $('ieRedo').addEventListener('click', redoOp);
     $('ieReset').addEventListener('click', resetAll);
+    $('ieRotate').addEventListener('click', function () { if (S.base) rotate(1); });
+    $('ieSaveKeep').addEventListener('click', function () {
+      if (!S.base) return;
+      clearTimeout(saveT); saveT = null; autoDirty = true; autoEl.textContent = 'Saving…';
+      autoSave();   // shared mode: writes into the gallery; standalone: saves a draft on this device
+    });
     $('ieSave').addEventListener('click', save);
     $('ieAgain').addEventListener('click', save);
     $('ieKeep').addEventListener('click', function () { doneEl.hidden = true; });
