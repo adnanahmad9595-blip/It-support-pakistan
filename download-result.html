@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,follow"><meta name="theme-color" content="#f7f8fc">
+<title>Your File Is Ready — LovePDFi</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+:root{color-scheme:light}body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f5f6fa;color:#182033}.ad-slot{display:flex;align-items:center;justify-content:center;min-height:90px;border:1px dashed #cbd2df;border-radius:14px;background:#fff;color:#8a93a5;font-size:12px;letter-spacing:.08em;text-transform:uppercase}.preview-frame{width:100%;height:min(75vh,900px);min-height:500px;border:0;background:white}.file-preview{max-width:100%;max-height:850px;object-fit:contain}.brand{letter-spacing:-.055em}.download-btn{box-shadow:0 8px 20px rgba(22,163,74,.2)}
+</style>
+</head>
+<body>
+<header class="bg-white border-b border-slate-200"><div class="max-w-6xl mx-auto px-4 sm:px-6 h-[76px] flex items-center justify-between"><a href="/" class="brand text-[28px] sm:text-3xl font-extrabold text-slate-900">LovePDFi</a><a href="/" class="text-sm font-semibold text-slate-600 hover:text-blue-600">← All tools</a></div></header>
+<main class="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-9">
+  <div class="ad-slot mb-6" aria-label="Advertisement slot 1">Advertisement</div>
+  <section class="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 sm:p-8">
+    <div class="flex flex-col items-center text-center">
+      <div class="w-16 h-16 rounded-full bg-green-100 text-green-700 flex items-center justify-center mb-4"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4L19 6"/></svg></div>
+      <p class="text-sm font-bold uppercase tracking-[.16em] text-green-700 mb-2">Processed successfully</p>
+      <h1 id="successTitle" class="text-2xl sm:text-3xl font-extrabold tracking-tight break-words">Your file is ready</h1>
+      <p id="successSub" class="text-slate-500 mt-2">Your file was processed securely in your browser.</p>
+      <button id="finalDownloadBtn" type="button" class="download-btn mt-6 w-full sm:w-auto sm:min-w-[340px] rounded-xl bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-4 focus:ring-green-200 text-white font-bold text-lg px-7 py-4 transition">Download your file</button>
+      <p class="text-xs text-slate-500 mt-3">Your file stays on your device — it is not uploaded to our server.</p>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-8" aria-label="File information">
+      <div class="rounded-xl bg-slate-50 border border-slate-100 p-4"><p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Original size</p><p id="originalSize" class="text-lg font-bold mt-1">—</p></div>
+      <div class="rounded-xl bg-slate-50 border border-slate-100 p-4"><p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">New size</p><p id="newSize" class="text-lg font-bold mt-1">—</p></div>
+      <div class="rounded-xl bg-green-50 border border-green-100 p-4"><p class="text-xs font-semibold text-green-700 uppercase tracking-wide">Space saved</p><p id="savedPercent" class="text-lg font-bold text-green-800 mt-1">—</p></div>
+    </div>
+  </section>
+  <section id="resultPreview" class="mt-7 bg-white rounded-3xl border border-slate-200 shadow-sm p-4 sm:p-6">
+    <div class="flex flex-wrap items-center justify-between gap-2 mb-4"><div><p class="text-xs font-bold uppercase tracking-[.15em] text-blue-600">Your output</p><h2 class="text-xl sm:text-2xl font-extrabold mt-1">Preview</h2></div><span id="fileTypeBadge" class="rounded-full bg-slate-100 text-slate-600 text-xs font-semibold px-3 py-1">File preview</span></div>
+    <div id="previewStage" class="rounded-2xl overflow-hidden bg-slate-50 border border-slate-200 min-h-[500px] flex items-center justify-center"><p class="text-slate-500 p-8 text-center">Loading preview…</p></div>
+    <p id="previewNote" class="text-xs text-slate-500 mt-3">Preview is generated locally in your browser.</p>
+  </section>
+  <div class="ad-slot mt-7" aria-label="Advertisement slot 2">Advertisement</div>
+  <div class="text-center py-8"><a href="/" class="inline-flex items-center gap-2 font-bold text-blue-700 hover:text-blue-800">← Process another file</a><p class="text-xs text-slate-400 mt-3">LovePDFi · Free online file tools</p></div>
+</main>
+<script>
+(function(){
+ 'use strict';
+ var raw; try{raw=sessionStorage.getItem('lovePdfiFinalResult')}catch(e){}
+ var data; try{data=raw?JSON.parse(raw):null}catch(e){data=null}
+ var $=function(id){return document.getElementById(id)};
+ function parseSize(v){if(typeof v==='number')return v;if(!v)return NaN;var m=String(v).trim().match(/^([\d.]+)\s*(B|KB|MB|GB)?$/i);if(!m)return NaN;var n=Number(m[1]),u=(m[2]||'B').toUpperCase();return n*(u==='GB'?1073741824:u==='MB'?1048576:u==='KB'?1024:1)}
+ function formatSize(n){if(!Number.isFinite(n))return '—';if(n<1024)return Math.round(n)+' B';if(n<1048576)return (n/1024).toFixed(1)+' KB';return (n/1048576).toFixed(2)+' MB'}
+ function base64ToBlob(base64,type){var bin=atob(base64),parts=[],chunk=1024*512;for(var i=0;i<bin.length;i+=chunk){var slice=bin.slice(i,i+chunk),arr=new Uint8Array(slice.length);for(var j=0;j<slice.length;j++)arr[j]=slice.charCodeAt(j);parts.push(arr)}return new Blob(parts,{type:type||'application/octet-stream'})}
+ if(!data||!data.fileData){$('successTitle').textContent='No processed file found';$('successSub').textContent='Please return to a tool, process a file, and open the result page again.';$('finalDownloadBtn').disabled=true;$('finalDownloadBtn').textContent='No file available';$('finalDownloadBtn').className+=' opacity-50 cursor-not-allowed';$('previewStage').innerHTML='<div class="p-8 text-center"><p class="font-bold text-slate-700">Your result is not available in this tab.</p><a class="inline-block mt-4 text-blue-700 font-bold" href="/">Choose a tool</a></div>';return}
+ var fileName=String(data.fileName||'lovepdfi-result').split(/[\\/]/).pop(),type=data.fileType||'application/octet-stream',blob;
+ try{blob=base64ToBlob(data.fileData,type)}catch(e){$('successTitle').textContent='Could not load this file';$('successSub').textContent='Return to the tool and process your file again.';return}
+ $('successTitle').textContent=fileName+' — Processed Successfully';$('successSub').textContent='Your file is ready to download.';$('finalDownloadBtn').textContent='Download '+fileName;$('originalSize').textContent=data.originalSize||'—';$('newSize').textContent=data.newSize||formatSize(blob.size);$('fileTypeBadge').textContent=type;
+ var old=parseSize(data.originalSize),now=parseSize(data.newSize);if(!Number.isFinite(now))now=blob.size;if(Number.isFinite(old)&&old>0){var saved=(old-now)/old*100;$('savedPercent').textContent=(saved>0?saved.toFixed(1):'0')+'%';if(saved<0)$('savedPercent').textContent='Size increased'}else $('savedPercent').textContent='—';
+ $('finalDownloadBtn').addEventListener('click',function(){var url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=fileName;a.style.display='none';document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(url)},60000)});
+ var stage=$('previewStage');if(type.indexOf('image/')===0){var img=document.createElement('img');img.className='file-preview block mx-auto';img.alt='Preview of '+fileName;img.style.minHeight='300px';img.src=URL.createObjectURL(blob);stage.className='rounded-2xl overflow-hidden bg-slate-50 border border-slate-200 min-h-[500px] flex items-center justify-center p-3 sm:p-6';stage.replaceChildren(img)}else if(type==='application/pdf'||/\.pdf$/i.test(fileName)){var frame=document.createElement('iframe');frame.className='preview-frame';frame.title='PDF preview';frame.src=URL.createObjectURL(blob)+'#toolbar=1&navpanes=0';stage.className='rounded-2xl overflow-hidden bg-slate-50 border border-slate-200';stage.replaceChildren(frame)}else{stage.innerHTML='<div class="p-8 text-center"><div class="text-5xl mb-4">📄</div><p class="font-bold text-slate-700">Preview is not available for this file type.</p><p class="text-sm text-slate-500 mt-2">Use the green download button to save your result.</p></div>';}
+ // Avoid retaining large base64 data after the page has restored the result.
+ try{sessionStorage.removeItem('lovePdfiFinalResult')}catch(e){}
+})();
+</script>
+</body></html>

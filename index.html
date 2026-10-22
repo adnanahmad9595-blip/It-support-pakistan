@@ -60,6 +60,7 @@
    <a href="./excel-to-csv">Excel / CSV</a>
    <a href="./text-to-qr-code">QR Code</a>
    <a href="./document-scanner-online">Scan to PDF</a>
+   <a href="./scan-document-to-image">Scan to Image</a>
    <a href="./blog">Blog</a>
    <small>Browser-only processing: files stay on your device.</small>
   </nav>
@@ -99,6 +100,7 @@
     <button class="subtab" data-sub="resize">Resize</button>
 <button class="subtab" data-sub="heic">iPhone (HEIC)</button>
 <button class="subtab" data-sub="edit">Edit</button>
+<button class="subtab" data-sub="imgscan">Scan Document</button>
    </div>
    <div id="imgzone">
     <p class="sub" style="margin:0 0 12px;text-align:center">Select your images below. The format is detected automatically, including iPhone (HEIC) photos.</p>
@@ -168,6 +170,29 @@
     
    </div>
    <div class="subpanel" data-subpanel="edit" hidden><div id="imgEditorRoot"></div></div>
+   <div class="subpanel" data-subpanel="imgscan" hidden>
+    <p class="sub" style="text-align:center;margin:0 0 12px"><b>Scan to image.</b> Scan pages with your camera or add photos. Page corners are found automatically, then you can adjust the corners, rotate, change the filter and save each page as a JPG or PNG image.</p>
+    <div class="actions"><button class="btn" id="iscCam">📷 Scan with camera</button><button class="btn" id="iscAdd">⬆ Add images</button><button class="btn red" id="iscClear" disabled>⊗ Clear</button></div>
+    <input type="file" id="iscFile" accept="image/*,.heic,.heif" multiple hidden>
+    <div class="row"><label><input type="checkbox" id="iscAuto" checked> Auto-crop pages</label></div>
+    <div class="row" role="group" aria-label="Filter"><span style="font-weight:500">Filter:</span><div class="seg"><button data-iscf="orig" aria-pressed="true">Original</button><button data-iscf="enh" aria-pressed="false">Enhance</button><button data-iscf="gray" aria-pressed="false">Gray</button><button data-iscf="bw" aria-pressed="false">B&amp;W</button></div></div>
+    <div id="iscInfo" class="sub" style="text-align:center;margin-top:12px"></div>
+    <div id="iscPrev" class="prev-box" hidden>
+      <div class="prev-stage" id="iscPrevStage"><img id="iscPrevImg" alt="Selected page"></div>
+    </div>
+    <div class="psg-toolbar" id="iscTools" role="group" aria-label="Page tools" hidden>
+      <button type="button" class="psg-tb" data-isctb="rot"><span aria-hidden="true">↻</span><b>Rotate</b></button>
+      <button type="button" class="psg-tb" data-isctb="crop"><span aria-hidden="true">▣</span><b>Edit</b></button>
+      <button type="button" class="psg-tb" data-isctb="arr"><span aria-hidden="true">⇅</span><b>Arrange</b></button>
+      <button type="button" class="psg-tb" data-isctb="sig"><span aria-hidden="true">✍</span><b>Sign</b></button>
+      <button type="button" class="psg-tb" data-isctb="txt"><span aria-hidden="true">T</span><b>Text</b></button>
+      <button type="button" class="psg-tb" data-isctb="drw"><span aria-hidden="true">✎</span><b>Draw</b></button>
+    </div>
+    <div id="iscGrid" class="sc-grid"></div>
+    <div class="row" role="group" aria-label="Save as"><span style="font-weight:500">Save as:</span><div class="seg"><button data-iscs="fmt" data-v="jpeg" aria-pressed="true">JPG</button><button data-iscs="fmt" data-v="png" aria-pressed="false">PNG</button></div></div>
+    <div class="row" role="group" aria-label="Quality"><span style="font-weight:500">Quality:</span><div class="seg"><button data-iscs="q" data-v="high" aria-pressed="false">High</button><button data-iscs="q" data-v="bal" aria-pressed="true">Balanced</button><button data-iscs="q" data-v="small" aria-pressed="false">Small file</button></div></div>
+    <div class="row"><button class="btn out" id="iscRun" disabled>Save as images</button></div>
+   </div>
   </div>
 
   <div data-panel="pdf" hidden>
@@ -311,6 +336,7 @@
 
   <div id="msg" aria-live="polite"></div>
   <div class="done" id="scout" style="text-align:center"></div>
+  <div class="done" id="iscout" style="text-align:center"></div>
   <div class="done" id="scout2" style="text-align:center"></div>
   <div class="done" id="batchout" style="text-align:center"></div>
   <div class="done" id="done">
@@ -340,6 +366,7 @@
 <a class="atl-card" href="#tool" data-cat="convert"><span class="atl-ico" aria-hidden="true">🗂️</span><h3>PDF to Image</h3><p>Convert PDF pages into JPG or PNG images.</p></a>
 <a class="atl-card" href="camera-to-pdf#tool" data-cat="convert scan"><span class="atl-ico" aria-hidden="true">📷</span><h3>Camera to PDF</h3><p>Take photos with your camera and save them as a PDF.</p></a>
 <a class="atl-card" href="document-scanner-online#tool" data-cat="convert scan"><span class="atl-ico" aria-hidden="true">📄</span><h3>Scan Document to PDF</h3><p>Scan pages with auto-crop, rotate and filters, then save a PDF.</p></a>
+<a class="atl-card" href="scan-document-to-image#tool" data-cat="images scan"><span class="atl-ico" aria-hidden="true">🧾</span><h3>Scan Document to Image</h3><p>Scan pages with auto-crop, rotate and filters, then save JPG or PNG images.</p></a>
 <a class="atl-card" href="excel-to-pdf#tool" data-cat="convert"><span class="atl-ico" aria-hidden="true">📊</span><h3>Excel to PDF</h3><p>Convert an Excel or CSV table into a simple PDF.</p></a>
 <a class="atl-card" href="compress-multiple-images#tool" data-cat="images"><span class="atl-ico" aria-hidden="true">🗜️</span><h3>Compress Multiple Images</h3><p>Shrink up to 30 images at once to a size or a percentage.</p></a>
 <a class="atl-card" href="add-watermark-to-image#tool" data-cat="images edit"><span class="atl-ico" aria-hidden="true">©️</span><h3>Add Watermark</h3><p>Put your name or logo on a photo, with size, opacity and position.</p></a>
@@ -463,7 +490,7 @@
  <div class="ov-bar"><button id="edauto" class="ovb">Auto</button><button id="edfull" class="ovb">Full page</button><button id="edrl" class="ovb" aria-label="Rotate left">↺</button><button id="edrr" class="ovb" aria-label="Rotate right">↻</button><button id="edprev" class="ovb">Preview</button></div>
  <div class="ov-bar"><button data-ef="orig" class="ovb" aria-pressed="true">Original</button><button data-ef="enh" class="ovb" aria-pressed="false">Enhance</button><button data-ef="gray" class="ovb" aria-pressed="false">Gray</button><button data-ef="bw" class="ovb" aria-pressed="false">B&amp;W</button></div>
 </div>
-<script src="tools.js?v=24"></script>
+<script src="tools.js?v=25"></script>
 
 
 

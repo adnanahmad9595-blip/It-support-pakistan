@@ -18,14 +18,16 @@
   var CSS = [
     '.ie [hidden]{display:none!important}',
     '.ie-note{text-align:center;margin:0 0 12px}',
-    '.ie-rotate-row{display:flex;justify-content:center;margin:10px 0 6px}',
-    '.ie-rotate-row .btn{width:100%;max-width:520px;min-height:46px;font-size:16px}',
-    '.ie-toolbar{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:10px 0 8px;padding:12px;background:var(--soft,#f1f5fb);border:1px solid var(--line,#e0e7f1);border-radius:16px}',
-    '.ie-toolbar .chip{display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:0;min-height:66px;padding:8px 4px!important;border-radius:14px!important;font-size:13px!important;line-height:1.2;text-align:center;white-space:normal;word-break:break-word}',
-    '.ie-toolbar .ie-ti{font-size:22px;line-height:1}',
-    '@media(max-width:520px){.ie-toolbar{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:10px}.ie-toolbar .chip{min-height:62px}}',
-    '.ie-actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:10px 0}',
-    '.ie-actions .btn{flex:1 1 150px;max-width:260px;min-height:46px}',
+    '.ie-rotate-row{display:flex;justify-content:center;margin:8px 0 4px}',
+    '.ie-rotate-row .btn{width:100%;max-width:520px;min-height:38px!important;padding:7px 12px!important;font-size:14px!important;border-radius:10px!important}',
+    '.ie-toolbar{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin:8px 0 6px;padding:8px;background:var(--soft,#f1f5fb);border:1px solid var(--line,#e0e7f1);border-radius:12px}',
+    '.ie-toolbar .chip{display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:0;min-height:46px;padding:5px 2px!important;border-radius:10px!important;font-size:11px!important;line-height:1.15;text-align:center;white-space:normal;word-break:break-word}',
+    '.ie-toolbar .ie-ti{font-size:17px;line-height:1}',
+    '@media(max-width:520px){.ie-toolbar{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;padding:6px}.ie-toolbar .chip{min-height:44px;font-size:10.5px!important}}',
+    '.ie-actions{display:flex;flex-wrap:nowrap;gap:6px;justify-content:center;margin:8px 0}',
+    '.ie-actions .btn,.ie-actions .btn.dl,.ie-actions .et-share{flex:1 1 0;min-width:0;max-width:none;min-height:38px!important;padding:7px 6px!important;font-size:13.5px!important;border-radius:10px!important;margin-left:0!important;white-space:nowrap}',
+    '.ie-done .et-share{margin-left:0}',
+    '.ie .ie-row .chip{padding:6px 12px;font-size:13px;min-height:34px}',
     '.ie-upload-actions{justify-content:center;gap:10px;flex-wrap:wrap}',
     '.ie-upload-actions .btn{min-width:145px}',
     '.ie-stagewrap{display:flex;justify-content:center;margin:10px 0}',
@@ -78,9 +80,9 @@
     '<div class="ie-row" role="group" aria-label="Save as"><span style="font-weight:500">Save as:</span><div class="seg" id="ieFmt">' +
     '<button type="button" data-f="png" aria-pressed="true">PNG</button><button type="button" data-f="jpeg" aria-pressed="false">JPG</button><button type="button" data-f="webp" aria-pressed="false">WebP</button></div></div>' +
     '<div class="ie-row" id="ieQrow" hidden><label>Quality <input type="range" id="ieQ" min="40" max="100" value="92"> <span class="ie-val" id="ieQv">92%</span></label></div>' +
-    '<div class="ie-actions"><button type="button" class="btn" id="ieSaveKeep">💾 Save</button><button type="button" class="btn dl" id="ieSave">⬇ Download Image</button></div>' +
+    '<div class="ie-actions"><button type="button" class="btn" id="ieSaveKeep">💾 Save</button><button type="button" class="btn dl" id="ieSave">⬇ Download</button><button type="button" class="btn et-share" id="ieShare">↗ Share</button></div>' +
     '<div class="ie-done" id="ieDone" role="status" hidden><strong>✓ Download started</strong><span id="ieDoneT"></span>' +
-    '<div class="ie-row"><button type="button" class="btn dl" id="ieAgain">⬇ Download again</button><button type="button" class="chip" id="ieKeep">✎ Keep editing</button></div></div>' +
+    '<div class="ie-row"><button type="button" class="btn dl" id="ieAgain">⬇ Download again</button><button type="button" class="btn et-share" id="ieShareAgain">↗ Share</button><button type="button" class="chip" id="ieKeep">✎ Keep editing</button></div></div>' +
     '<p class="ie-info" id="ieInfo" role="status"></p>' +
     '<p class="ie-info ie-auto" id="ieAuto" role="status"></p>' +
     '</div></div>';
@@ -119,6 +121,17 @@
     function cloneWm(w) { return { on: w.on, type: w.type, text: w.text, color: w.color, size: w.size, opacity: w.opacity, pos: w.pos, img: w.img }; }
     function newCanvas(w, h) { var c = document.createElement('canvas'); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); c._id = ++baseId; return c; }
     function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+    // One single, smooth scroll (several scroll calls cancel each other in mobile browsers).
+    function revealEditor() {
+      var t = root.querySelector('.ie-stagewrap');
+      if (!t || workEl.hidden || root.offsetParent === null) return;
+      var bar = document.querySelector('.bar'), hdr = (bar && bar.offsetHeight) || 64, vh = window.innerHeight;
+      var top = t.getBoundingClientRect().top;
+      if (top >= hdr && top <= vh * 0.3) return;   // picture already comfortably in view
+      var y = Math.max(0, window.pageYOffset + top - hdr - 12);
+      var calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      try { window.scrollTo({ top: y, behavior: calm ? 'auto' : 'smooth' }); } catch (e) { window.scrollTo(0, y); }
+    }
     function say(t) { msgEl.hidden = !t; msgEl.textContent = t || ''; }
 
     // ---------------------------------------------------------------- loading
@@ -158,21 +171,11 @@
         workEl.hidden = false;
         $('ieResumeRow').hidden = true; doneEl.hidden = true; autoEl.textContent = '';
         say(s < 1 ? 'Large photo reduced to ' + c.width + '×' + c.height + ' for smooth editing.' : '');
-        setTool(null);   // a freshly added image starts with NO tool selected
+        setTool(root.dataset.startTool || null);   // a landing page can pre-select a tool (e.g. Watermark); otherwise NO tool is selected
         syncHist();
         infoEl.textContent = '';
-        // Auto-scroll to the editor tools after an image is loaded, including
-        // when the image comes from the shared gallery above this panel.
-        window.setTimeout(function () {
-          var target = root.querySelector('.ie-stagewrap') || workEl;
-          if (!target || workEl.hidden) return;
-          try { target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
-          catch (e) { target.scrollIntoView(true); }
-          // Leave a little room for sticky site headers on mobile.
-          window.setTimeout(function () {
-            try { window.scrollBy({ top: -72, behavior: 'smooth' }); } catch (e) {}
-          }, 220);
-        }, 120);
+        // Auto-scroll (same idea as Compress / Resize): after a picture is loaded, bring the picture and the tool panel into view.
+        window.setTimeout(function () { revealEditor(); }, 160);
       } catch (e) {
         say(e && e.message === 'heic'
           ? 'This is an iPhone (HEIC) photo. Please convert it first in the “iPhone (HEIC)” tab, then edit it here.'
@@ -855,24 +858,42 @@
       drawWm(x, out.width, out.height);
       return out;
     }
-    function save() {
+    function shareFile(b, name) {
+      if (window.LovePDFiShare) return window.LovePDFiShare.file(b, name);
+      try {
+        var f = new File([b], name, { type: b.type });
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [f] }))
+          return navigator.share({ files: [f], title: name }).then(function () { return true; }, function (e) { return !!(e && e.name === 'AbortError'); });
+      } catch (e) { /* not supported */ }
+      return Promise.resolve(false);
+    }
+    function save(share) {
       if (!S.base) return;
+      share = share === true;
       var fmt = P.fmt, mime = fmt === 'jpeg' ? 'image/jpeg' : fmt === 'webp' ? 'image/webp' : 'image/png', ext = fmt === 'jpeg' ? 'jpg' : fmt;
       var out = renderFull(fmt === 'jpeg');
       infoEl.textContent = 'Preparing…';
       out.toBlob(function (b) {
         if (!b) { infoEl.textContent = 'Could not save this image. Try PNG or a smaller photo.'; return; }
-        var a = document.createElement('a'), u = URL.createObjectURL(b);
-        a.href = u; a.download = S.name + '-edited.' + ext; document.body.appendChild(a); a.click(); a.remove();
-        setTimeout(function () { URL.revokeObjectURL(u); }, 4000);
+        var fname = S.name + '-edited.' + ext;
         var sizeTxt = b.size >= 1048576 ? (b.size / 1048576).toFixed(2) + ' MB' : Math.round(b.size / 1024) + ' KB';
-        infoEl.textContent = '✓ Saved ' + out.width + '×' + out.height + ' px · ' + sizeTxt + ' · ' + ext.toUpperCase();
-        $('ieDoneT').textContent = S.name + '-edited.' + ext + ' · ' + sizeTxt + ' — check your Downloads folder.';
-        doneEl.hidden = false;
-        // Hook for the storage backend (to be connected later)
-        var meta = { name: S.name + '-edited.' + ext, format: ext, width: out.width, height: out.height, size: b.size };
-        try { if (window.LovePDFiStorage && typeof window.LovePDFiStorage.save === 'function') window.LovePDFiStorage.save(b, meta); } catch (x) { /* ignore */ }
-        try { root.dispatchEvent(new CustomEvent('lovepdfi:edited-image', { bubbles: true, detail: { blob: b, meta: meta } })); } catch (x) { /* ignore */ }
+        var shareP = share ? shareFile(b, fname) : Promise.resolve(false);
+        shareP.then(function (shared) {
+          if (!shared) {
+            var a = document.createElement('a'), u = URL.createObjectURL(b);
+            a.href = u; a.download = fname; document.body.appendChild(a); a.click(); a.remove();
+            setTimeout(function () { URL.revokeObjectURL(u); }, 4000);
+            if (share && window.LovePDFiShare) window.LovePDFiShare.toast(window.LovePDFiShare.fallbackNote);
+          }
+          infoEl.textContent = (shared ? '✓ Shared ' : '✓ Saved ') + out.width + '×' + out.height + ' px · ' + sizeTxt + ' · ' + ext.toUpperCase();
+          doneEl.querySelector('strong').textContent = shared ? '✓ Shared' : '✓ Download started';
+          $('ieDoneT').textContent = fname + ' · ' + sizeTxt + (shared ? '' : ' — check your Downloads folder.');
+          doneEl.hidden = false;
+          // Hook for the storage backend (to be connected later)
+          var meta = { name: fname, format: ext, width: out.width, height: out.height, size: b.size };
+          try { if (window.LovePDFiStorage && typeof window.LovePDFiStorage.save === 'function') window.LovePDFiStorage.save(b, meta); } catch (x) { /* ignore */ }
+          try { root.dispatchEvent(new CustomEvent('lovepdfi:edited-image', { bubbles: true, detail: { blob: b, meta: meta } })); } catch (x) { /* ignore */ }
+        });
       }, mime, fmt === 'png' ? undefined : P.q / 100);
     }
 
@@ -907,8 +928,10 @@
       clearTimeout(saveT); saveT = null; autoDirty = true; autoEl.textContent = 'Saving…';
       autoSave();   // shared mode: writes into the gallery; standalone: saves a draft on this device
     });
-    $('ieSave').addEventListener('click', save);
-    $('ieAgain').addEventListener('click', save);
+    $('ieSave').addEventListener('click', function () { save(false); });
+    $('ieAgain').addEventListener('click', function () { save(false); });
+    $('ieShare').addEventListener('click', function () { save(true); });
+    $('ieShareAgain').addEventListener('click', function () { save(true); });
     $('ieKeep').addEventListener('click', function () { doneEl.hidden = true; });
     var draftData = null;
     if (!shared) dbGet().then(function (d) { if (d && d.cur) { draftData = d; $('ieResumeRow').hidden = false; } }).catch(function () { /* no saved draft */ });
@@ -935,6 +958,7 @@
 
     if (shared) {
       inst = { refresh: syncFromGallery, flush: flush };
+      inst.startTool = function (t) { root.dataset.startTool = t || ''; if (S.base && root.offsetParent !== null) setTool(t || null); };
       G.onChange(function (c) {
         if (S.writing && c && c.id === S.itemId) return;   // our own write-back
         if (root.offsetParent === null) return;           // Edit tab hidden: refreshed when it is shown
@@ -948,7 +972,7 @@
   }
 
   var inst = null;
-  window.LovePDFiEditor = { mount: mount, refresh: function () { if (inst) inst.refresh(); }, flush: function () { return inst ? inst.flush() : Promise.resolve(); } };
+  window.LovePDFiEditor = { mount: mount, refresh: function () { if (inst) inst.refresh(); }, flush: function () { return inst ? inst.flush() : Promise.resolve(); }, startTool: function (t) { if (inst && inst.startTool) inst.startTool(t); } };
   var r = document.getElementById('imgEditorRoot');
   if (r) mount(r);
 })();

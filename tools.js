@@ -46,10 +46,10 @@ if (document.body && document.body.getAttribute('data-shared-app') === '1') {
   cur=t;
   Q('.tab').forEach(function(b){b.setAttribute('aria-selected',b.dataset.tab===t)});
   Q('[data-panel]').forEach(function(p){p.hidden=p.dataset.panel!==t});
-  var text={images:'Image tools: compress, convert, resize or edit.',pdf:'PDF tools: compress, merge, split, or make a PDF from photos.',files:'Excel / CSV tools: select your file, then choose the available conversion.',qrtools:'QR tools: create a QR code or decode a QR image to text.'};
+  var text={images:'Image tools: compress, convert, resize, scan or edit.',pdf:'PDF tools: compress, merge, split, or make a PDF from photos.',files:'Excel / CSV tools: select your file, then choose the available conversion.',qrtools:'QR tools: create a QR code or decode a QR image to text.'};
   $('sub').textContent=text[t]||''; msg.textContent='';$('done').classList.remove('show');
  }
- function showSub(panel,key){var root=document.querySelector('[data-panel="'+panel+'"]');if(!root)return;root.querySelectorAll('.subtab').forEach(function(b){b.classList.toggle('active',b.dataset.sub===key)});root.querySelectorAll('[data-subpanel]').forEach(function(p){p.hidden=p.dataset.subpanel!==key});if(panel==='pdf'&&window.PDFShared&&window.PDFShared.onTool)window.PDFShared.onTool(key);if(panel==='images'){var _z=document.getElementById('imgzone');if(_z){_z.hidden=false;_z.classList.toggle('edit-mode',key==='edit')}var _E=window.LovePDFiEditor;if(key==='edit'){loadEditor();if(_E&&_E.refresh)_E.refresh()}else if(_E&&_E.flush)_E.flush();}}
+ function showSub(panel,key){var root=document.querySelector('[data-panel="'+panel+'"]');if(!root)return;root.querySelectorAll('.subtab').forEach(function(b){b.classList.toggle('active',b.dataset.sub===key)});root.querySelectorAll('[data-subpanel]').forEach(function(p){p.hidden=p.dataset.subpanel!==key});if(panel==='pdf'&&window.PDFShared&&window.PDFShared.onTool)window.PDFShared.onTool(key);if(panel==='images'){var _z=document.getElementById('imgzone');if(_z){_z.hidden=(key==='imgscan');_z.classList.toggle('edit-mode',key==='edit')}var _E=window.LovePDFiEditor;if(key==='edit'){loadEditor();if(_E&&_E.refresh)_E.refresh()}else if(_E&&_E.flush)_E.flush();}}
  var _edLoading=null;
  function loadEditor(){var r=document.getElementById('imgEditorRoot');if(!r||r.dataset.ieMounted)return;if(window.LovePDFiEditor){window.LovePDFiEditor.mount(r);return}if(_edLoading)return;_edLoading=document.createElement('script');_edLoading.src='image-editor.js?v=8';_edLoading.onerror=function(){_edLoading=null;r.innerHTML='<p class="sub" style="text-align:center">Could not load the editor. Check your connection and try again.</p>'};document.head.appendChild(_edLoading)}
  window.__lj=function(k){return lj(k)};
@@ -89,6 +89,7 @@ if (document.body && document.body.getAttribute('data-shared-app') === '1') {
   'pdf-to-image':{tab:'pdf',sub:'pdfimg'},
   'camera-to-pdf':{tab:'pdf',sub:'scan',camera:true},
   'document-scanner-online':{tab:'pdf',sub:'scan'},
+  'scan-document-to-image':{tab:'images',sub:'imgscan'},
   'merge-pdf':{tab:'pdf',sub:'pdfmerge'},
   'split-pdf':{tab:'pdf',sub:'pdfsplit'},
   'edit-pdf-online':{tab:'pdf',sub:'pdfedit'},
@@ -131,7 +132,7 @@ if (document.body && document.body.getAttribute('data-shared-app') === '1') {
   nav.classList.remove('show');
   if(initial)return true;
   var target=$('tool');if(target){target.scrollIntoView({behavior:'smooth',block:'start'});}
-  if(cfg.camera){setTimeout(function(){var id=cfg.tab==='images'?'camshot':cfg.tab==='pdf'?'scCam':'qrcam';var btn=$(id);if(btn)btn.focus({preventScroll:true});},350);}
+  if(cfg.camera){setTimeout(function(){var id=cfg.sub==='imgscan'?'iscCam':cfg.tab==='images'?'camshot':cfg.tab==='pdf'?'scCam':'qrcam';var btn=$(id);if(btn)btn.focus({preventScroll:true});},350);}
   return true;
  }
  function chooseCardTool(a){
@@ -1632,6 +1633,99 @@ var ScanLib=(function(){
     showPdf($('scout'),await doc.save(),'scan.pdf',SC.items.length)}
    catch(e){err('Could not create the PDF. Try fewer pages or the Small file option.')}
    bt.disabled=!SC.items.length};
+
+  /* ---------------- Scan Document to Image (Images tab: camera / images -> auto crop -> JPG or PNG) ----------------
+     Same scanner as the PDF "Scan Document" tool (camera + angle lock, auto corner detection, crop editor, rotate,
+     filters, reorder, delete, Sign / Text / Draw). Only the last step differs: pages are saved as images, not a PDF. */
+  (function(){
+   if(!$('iscRun')||!$('iscCam'))return;
+   var ISC={items:[],filter:'orig',fmt:'jpeg',q:'bal',sel:0},iscUrls=[],iscPrevUrl=null;
+   async function iscShowPrev(){
+    var box=$('iscPrev'),img=$('iscPrevImg');if(!box||!img)return;
+    if(!ISC.items.length){box.hidden=true;img.removeAttribute('src');if(iscPrevUrl){URL.revokeObjectURL(iscPrevUrl);iscPrevUrl=null}return}
+    if(ISC.sel<0||ISC.sel>=ISC.items.length)ISC.sel=0;
+    var it=ISC.items[ISC.sel],u=await prevSrc(it),old=iscPrevUrl;
+    box.hidden=false;img.src=u;iscPrevUrl=u;if(old&&old!==u)URL.revokeObjectURL(old)}
+   function iscRender(){
+    $('iscGrid').innerHTML=gridHtml(ISC.items,ISC.sel);
+    $('iscInfo').textContent=ISC.items.length?cap(ISC.items.length)+' ready':'';
+    $('iscRun').disabled=!ISC.items.length;$('iscClear').disabled=!ISC.items.length;
+    $('iscTools').hidden=!ISC.items.length;
+    iscShowPrev()}
+   async function iscAdd(files,isCam){
+    var auto=$('iscAuto').checked;
+    for(var i=0;i<files.length;i++){
+     if(ISC.items.length>=60){err('Maximum 60 pages.');break}
+     try{msg.textContent='Processing page '+(ISC.items.length+1)+'…';var f=files[i];
+      if(!isCam){var n=await normImg(f);f=n.file}
+      var r=await autoProcess(f,ISC.filter,auto);ISC.items.push({orig:f,blob:r.blob,thumb:thumbOfCanvas(r.canvas)});ISC.sel=ISC.items.length-1;iscRender()}
+     catch(e){err('A page could not be read. Use JPG, PNG, WebP or HEIC images.')}}
+    if(!$('msg').querySelector('.err'))msg.textContent='';iscRender()}
+   $('iscCam').onclick=async function(){
+    try{await camOpen({multi:true,detect:true,onShot:function(b){return iscAdd([b],true)}})}catch(e){camFail(e,function(){$('iscFile').click()})}};
+   $('iscAdd').onclick=function(){$('iscFile').click()};
+   $('iscFile').onchange=function(){var fl=Array.prototype.slice.call(this.files);this.value='';iscAdd(fl,false)};
+   Q('[data-iscf]').forEach(function(b){b.onclick=function(){ISC.filter=b.dataset.iscf;Q('[data-iscf]').forEach(function(x){x.setAttribute('aria-pressed',x===b?'true':'false')})}});
+   Q('[data-iscs]').forEach(function(b){b.onclick=function(){var k=b.dataset.iscs;ISC[k]=b.dataset.v;Q('[data-iscs="'+k+'"]').forEach(function(x){x.setAttribute('aria-pressed',x===b?'true':'false')})}});
+   async function iscDoRot(d){var it=ISC.items[ISC.sel];if(!it)return;it.blob=await rotBlob(it.blob,d);it.orig=await rotBlob(it.orig,d);it.cq=null;it.thumb=thumbOfCanvas(await blobToCanvas(it.blob,300));iscRender()}
+   $('iscGrid').onclick=async function(e){
+    var card=e.target.closest('[data-sel]');
+    if(card&&!e.target.closest('button')){ISC.sel=+card.dataset.sel;iscRender();return}
+    var bt=e.target.closest('button');if(!bt)return;var i=+bt.dataset.i,a=bt.dataset.a,it=ISC.items[i];if(!it)return;ISC.sel=i;
+    if(a==='rm')ISC.items.splice(i,1);else if(a==='up'||a==='dn')ISC.sel=moveItem(ISC.items,i,a);
+    else if(a==='rl'||a==='rr'){var d=a==='rr'?90:270;it.blob=await rotBlob(it.blob,d);it.orig=await rotBlob(it.orig,d);it.cq=null;it.thumb=thumbOfCanvas(await blobToCanvas(it.blob,300))}
+    else if(a==='ed'){return edOpen(it.orig,async function(bl,c){it.blob=bl;it.thumb=thumbOfCanvas(c);iscRender()},{filter:ISC.filter})}
+    iscRender()};
+   function iscAnnot(mode){var i=ISC.sel,it=ISC.items[i];if(!it||!window.PageAnnot)return;
+    window.PageAnnot.open(it.blob||it.orig,mode,function(bl,c){it.blob=bl;it.thumb=thumbOfCanvas(c);ISC.sel=i;iscRender()})}
+   function iscTool(t){
+    if(!ISC.items.length)return;
+    if(t==='rot')return iscDoRot(90);
+    if(t==='crop')return edOpenPages({i:ISC.sel,count:function(){return ISC.items.length},
+     load:async function(k){var it=ISC.items[k];return {src:it.orig,cq:it.cq,filter:ISC.filter}},
+     save:async function(k,r){var it=ISC.items[k];if(!it)return;it.blob=r.blob;it.thumb=thumbOfCanvas(r.canvas);it.cq=r.cq;if(r.orig)it.orig=r.orig;ISC.sel=k},
+     done:function(){iscRender()}});
+    if(t==='arr'){if(window.lpArrange)window.lpArrange({count:function(){return ISC.items.length},get:function(i){return {src:ISC.items[i].thumb}},
+     reorder:function(o){var cur=ISC.items[ISC.sel];edApplyOrder(ISC.items,o);ISC.sel=Math.max(0,ISC.items.indexOf(cur));iscRender()}});return}
+    if(t==='sig')return iscAnnot('sig');if(t==='txt')return iscAnnot('text');if(t==='drw')return iscAnnot('draw')}
+   $('iscTools').onclick=function(e){var b=e.target.closest('[data-isctb]');if(b)iscTool(b.dataset.isctb)};
+   function iscFs(){var s=$('iscPrevImg')&&$('iscPrevImg').src;if(s)lbShow(s)}
+   if($('iscPrevStage')){$('iscPrevStage').onclick=iscFs}
+   function iscClearOut(){iscUrls.forEach(function(u){URL.revokeObjectURL(u)});iscUrls=[];var o=$('iscout');if(o){o.classList.remove('show');o.innerHTML=''}}
+   $('iscClear').onclick=function(){ISC.items=[];ISC.sel=0;iscRender();iscClearOut();msg.textContent=''};
+
+   /* save: every page becomes one JPG or PNG (same size / quality presets as the PDF scanner) */
+   async function iscBuild(){
+    var cfg=QM[ISC.q],png=ISC.fmt==='png',ext=png?'png':'jpg',mime=png?'image/png':'image/jpeg',n=ISC.items.length,pad=String(n).length,res=[];
+    for(var i=0;i<n;i++){
+     msg.textContent='Saving page '+(i+1)+' of '+n+'…';
+     var c=await blobToCanvas(ISC.items[i].blob,cfg.m);
+     var bl=await new Promise(function(r){c.toBlob(r,mime,png?undefined:cfg.q)});
+     if(!bl)throw new Error('encode');
+     res.push({name:'scan-page-'+String(i+1).padStart(pad,'0')+'.'+ext,blob:bl})}
+    return res}
+   function iscShow(res){
+    iscClearOut();
+    var out=$('iscout'),ext=ISC.fmt==='png'?'PNG':'JPG',total=res.reduce(function(a,o){return a+o.blob.size},0),h='';
+    h+='<div class="ok">✓ Done! Your '+(res.length===1?'image is':'images are')+' ready</div><div class="sub">'+res.length+' page'+(res.length>1?'s':'')+' · '+ext+' · '+size(total)+'</div>';
+    if(res.length===1){var u1=URL.createObjectURL(res[0].blob);iscUrls.push(u1);
+     h+='<p style="margin:14px 0"><a class="btn dl" href="'+u1+'" download="'+esc(res[0].name)+'" data-et-base-name="'+esc(res[0].name)+'">Download image</a></p>'}
+    else{
+     res.forEach(function(o){var u=URL.createObjectURL(o.blob);iscUrls.push(u);
+      h+='<div class="ip-res"><span>'+esc(o.name)+' · '+size(o.blob.size)+'</span><span style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn dl" style="padding:9px 18px;font-size:15px" href="'+u+'" download="'+esc(o.name)+'" data-et-base-name="'+esc(o.name)+'">Download</a></span></div>'});
+     h+='<div style="margin-top:14px"><button type="button" class="btn dl" id="iscZip">Download all (ZIP)</button></div>'}
+    h+='<p class="sub" style="margin:14px 0 0">Thank you for using LovePDFi.</p>';
+    out.innerHTML=h;out.classList.add('show');msg.textContent='';
+    var z=$('iscZip');
+    if(z&&window.LovePDFiShare)window.LovePDFiShare.zipPair(z,async function(){await lj('jszip');var zip=new JSZip();res.forEach(function(o){zip.file(o.name,o.blob)});return{blob:await zip.generateAsync({type:'blob'}),name:easyToolsTimestampFilename('scan-images.zip')}},function(){err('Could not create the ZIP. Please download the images one by one.')});
+    out.scrollIntoView({behavior:'smooth',block:'nearest'})}
+   $('iscRun').onclick=async function(){
+    if(!ISC.items.length)return;var bt=this;bt.disabled=true;iscClearOut();msg.textContent='Saving images…';
+    try{iscShow(await iscBuild())}
+    catch(e){err('Could not save the images. Try fewer pages or the Small file option.')}
+    bt.disabled=!ISC.items.length};
+   iscRender();
+  })();
 
   /* ---------------- Edit PDF (rotate, delete, reorder, edit page, add images) ---------------- */
   var EP={items:[],doc:null,bytes:null,name:'edited',sel:0,src:null,pages:0,failed:null,loading:null};

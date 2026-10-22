@@ -39,3 +39,18 @@ SEO کے بعد کے مراحل:
 
 
 برانڈ اپ ڈیٹ کی اضافی تصدیق: HTML صفحوں کے لوگو میں دکھائی دینے والا EasyTools متن بھی LovePDFi سے بدل دیا گیا ہے۔
+
+
+FINAL UPDATE (tools + filters + ads)
+------------------------------------
+1) Scan filter: Enhance ab halka hai (text gehra, kaghaz saaf, rang barqarar). Original photo par hi filter lagta hai.
+2) Gallery ke neeche ek hi line mein tools: Rotate, Crop (tamam PDF tools), Sign, Text, Draw (sirf Scan Documents aur Edit PDF).
+3) Compress/Merge/Split/PDF to Image mein Rotate/Crop PDF page par direct lagta hai aur output mein shamil hota hai.
+4) Signature: ungli se banayen ya signature ki photo use karein (safed kaghaz khud transparent ho jata hai).
+5) AdSense script (ca-pub-4193915390669921) ab har HTML page par hai. 2 purane blog pages ka purana domain/EasyTools naam bhi theek kiya.
+6) Deploy ke baad browser cache saaf karein (tools.js?v=15, site-late.css?v=15).
+
+SPEED UPDATE (PageSpeed)
+- 4 CSS files ek file (lovepdfi.css?v=16) mein jod di gayin; Google Fonts ab page ko block nahi karte.
+- "Accessibility tree is not well-formed" (Image tools subtabs) theek kiya: role="tablist" ki jagah role="group".
+- Deploy ke baad PageSpeed dobara chalayen.
