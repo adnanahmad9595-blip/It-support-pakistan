@@ -137,3 +137,15 @@ html{scroll-padding-top:90px}.related-tools{margin-top:50px}.related-tools h2{te
 .arr-it b{position:absolute;left:4px;top:4px;min-width:24px;height:24px;line-height:24px;padding:0 6px;border-radius:12px;background:#2563eb;color:#fff;font-size:13px;text-align:center;pointer-events:none}
 .arr-it.arr-src{opacity:.35;border-style:dashed;border-color:#38bdf8}
 .arr-ghost{position:fixed;z-index:1200;width:84px;height:112px;object-fit:contain;background:#fff;border:2px solid #38bdf8;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.55);pointer-events:none;transform:translate(-50%,-60%) rotate(3deg);opacity:.95}
+
+/* signature editor: multi-page view, frame notes, colour menu */
+.lpa-stage.multi{display:block;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:8px 8px 28px}
+.lpa-pg{position:relative;margin:0 auto 14px;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.45)}
+.lpa-pg img{display:block;width:100%;height:100%;object-fit:fill;user-select:none;-webkit-user-drag:none;pointer-events:none}
+.lpa-pg canvas{position:absolute;left:0;top:0;width:100%;height:100%;background:transparent!important}
+.lpa-pgn{position:absolute;left:6px;top:6px;background:rgba(15,23,42,.75);color:#fff;border-radius:6px;padding:0 7px;font-size:12px;pointer-events:none}
+.lpa-note{padding:6px 12px;text-align:center;font-size:13px;color:#a7f3d0}
+.lpa-pal{flex:1 0 100%;display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap}
+.lpa-sw.on{border-color:#fff}
+.lpa-bar .lpa-b[disabled]{opacity:.45}
+.lpa-rem{display:flex;gap:8px;align-items:center;font-size:13px;color:#334155}
