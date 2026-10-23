@@ -1561,7 +1561,15 @@ var ScanLib=(function(){
   Q('[data-lock]').forEach(function(b){b.onclick=function(){CM.lockMode=b.dataset.lock;if(CM.lockMode==='auto'){CM.lockO=null;CM.lockA=null}updLock()}});
   document.addEventListener('visibilitychange',function(){if(document.hidden&&CM.stream)camClose()});
   window.addEventListener('pagehide',function(){if(CM.stream)camClose()});
-  function camFail(e,fallback){if(e&&e.name==='NotAllowedError')err('Camera permission was denied. Allow camera access in your browser settings, or choose files instead.');else if(fallback)fallback();else err('Could not start the camera. Choose files instead.')}
+  function camFail(e,fallback){
+   /* NotAllowedError can also mean the browser/site policy or OS blocked getUserMedia,
+      even when the user believes permission is enabled. Use the existing capture/file
+      fallback rather than falsely claiming that browser permission is definitely off. */
+   var name=e&&e.name||'',secure=window.isSecureContext;
+   if(fallback&&(name==='NotAllowedError'||name==='PermissionDeniedError'||name==='NotFoundError'||name==='OverconstrainedError'||name==='NotReadableError'||name==='AbortError'||!secure)){fallback();return}
+   var message=!secure?'Camera access requires HTTPS (or localhost).':(name==='NotAllowedError'||name==='PermissionDeniedError'?'The browser, site policy, or device blocked camera access. Check site permission and Android camera privacy access, or choose a photo instead.':name==='NotFoundError'?'No camera was found on this device. Choose a photo instead.':name==='NotReadableError'?'The camera may be busy in another app. Close other camera apps and try again.':'Could not start the camera ('+(name||'unknown error')+'). Choose a photo instead.');
+   err(message)
+  }
 
   /* image tools: Take photo uses the new camera (frame + angle lock), several shots allowed */
   $('camshot').onclick=async function(){
