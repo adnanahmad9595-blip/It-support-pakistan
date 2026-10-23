@@ -149,3 +149,5 @@ html{scroll-padding-top:90px}.related-tools{margin-top:50px}.related-tools h2{te
 .lpa-sw.on{border-color:#fff}
 .lpa-bar .lpa-b[disabled]{opacity:.45}
 .lpa-rem{display:flex;gap:8px;align-items:center;font-size:13px;color:#334155}
+.lpa-chk{display:inline-flex;align-items:center;gap:8px;padding:9px 14px;border:1px solid #334155;border-radius:10px;background:#1e293b;color:#fff;font-size:14px;font-weight:600;cursor:pointer}
+.lpa-chk input{width:20px;height:20px;accent-color:#10b981;margin:0}
