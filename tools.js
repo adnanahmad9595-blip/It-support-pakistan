@@ -51,7 +51,7 @@ if (document.body && document.body.getAttribute('data-shared-app') === '1') {
  }
  function showSub(panel,key){var root=document.querySelector('[data-panel="'+panel+'"]');if(!root)return;root.querySelectorAll('.subtab').forEach(function(b){b.classList.toggle('active',b.dataset.sub===key)});root.querySelectorAll('[data-subpanel]').forEach(function(p){p.hidden=p.dataset.subpanel!==key});if(panel==='pdf'&&window.PDFShared&&window.PDFShared.onTool)window.PDFShared.onTool(key);if(panel==='images'){var _z=document.getElementById('imgzone');if(_z){_z.hidden=(key==='imgscan');_z.classList.toggle('edit-mode',key==='edit')}var _E=window.LovePDFiEditor;if(key==='edit'){loadEditor();if(_E&&_E.refresh)_E.refresh()}else if(_E&&_E.flush)_E.flush();}}
  var _edLoading=null;
- function loadEditor(){var r=document.getElementById('imgEditorRoot');if(!r||r.dataset.ieMounted)return;if(window.LovePDFiEditor){window.LovePDFiEditor.mount(r);return}if(_edLoading)return;_edLoading=document.createElement('script');_edLoading.src='image-editor.js?v=8';_edLoading.onerror=function(){_edLoading=null;r.innerHTML='<p class="sub" style="text-align:center">Could not load the editor. Check your connection and try again.</p>'};document.head.appendChild(_edLoading)}
+ function loadEditor(){var r=document.getElementById('imgEditorRoot');if(!r||r.dataset.ieMounted)return;if(window.LovePDFiEditor){window.LovePDFiEditor.mount(r);return}if(_edLoading)return;_edLoading=document.createElement('script');_edLoading.src='image-editor.js?v=15';_edLoading.onerror=function(){_edLoading=null;r.innerHTML='<p class="sub" style="text-align:center">Could not load the editor. Check your connection and try again.</p>'};document.head.appendChild(_edLoading)}
  window.__lj=function(k){return lj(k)};
 
  var URLS={imgc:'https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js',qr:'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js',jsqr:'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js',pdflib:'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js',pdfjs:'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',xlsx:'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',jspdf:'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',atable:'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js',jszip:'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',heic:'https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js'};
@@ -2082,7 +2082,7 @@ var ScanLib=(function(){
   });
   ['dragover','dragenter'].forEach(function(v){box.addEventListener(v,function(e){e.preventDefault()})});
   box.addEventListener('drop',function(e){e.preventDefault();add(Array.prototype.slice.call(e.dataTransfer.files))});
-  return {workedFiles:function(){return items.filter(isWorked).map(function(it){return it.f})},add:add,clear:clearAll,cropFor:cropFor,shown:shown,current:curInfo,setCanvas:setCanvas,preview:previewBlob,clearPreview:clearPreview,onChange:function(fn){subs.push(fn)}};
+  return {workedFiles:function(){return items.filter(isWorked).map(function(it){return it.f})},add:add,clear:clearAll,cropFor:cropFor,shown:shown,current:curInfo,count:function(){return items.length},index:function(){return sel},select:function(i){if(i<0||i>=items.length||i===sel)return;saveCrop();sel=i;show()},setCanvas:setCanvas,preview:previewBlob,clearPreview:clearPreview,onChange:function(fn){subs.push(fn)}};
  })();
  window.LovePDFiGallery=GAL;
  function pick(f){GAL.add(f?[f]:[])}
@@ -2580,7 +2580,7 @@ var ScanLib=(function(){
   var d=new Date(o.at||Date.now()),z=function(n){return (n<10?'0':'')+n},
    ds=d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate()),ts=z(d.getHours())+':'+z(d.getMinutes());
   return S.stampDate&&S.stampTime?ds+' '+ts:(S.stampDate?ds:ts)}
- function sigDims(o){var ih=o.w*o.ar,band=stampTxt(o)?ih*0.34:0;return {ih:ih,band:band,W:o.w,H:ih+band}}
+ function sigDims(o){var ih=o.w*o.ar;return {ih:ih,band:0,W:o.w,H:ih}}
  function bbox(o){scratch.font='600 '+o.size+'px Arial,sans-serif';return {x:o.x,y:o.y-o.size,w:scratch.measureText(o.text).width,h:o.size*1.25}}
  function rotPt(o,lx,ly){var c=Math.cos(o.rot||0),s=Math.sin(o.rot||0);return {x:o.cx+lx*c-ly*s,y:o.cy+lx*s+ly*c}}
  function hpos(P,o){var pad=6*cssK(P),d=sigDims(o),hw=d.W/2+pad,hh=d.H/2+pad;return {x:rotPt(o,-hw,-hh),m:rotPt(o,hw,-hh),r:rotPt(o,hw,hh)}}
@@ -2602,7 +2602,7 @@ var ScanLib=(function(){
   var o={type:'sig',src:src,color:null,img:src,ar:src.height/src.width,w:P.w*0.3,cx:P.w/2,cy:P.h/2,rot:0,gid:null,at:Date.now()};
   if(at){o.w=at.w;o.cx=at.cx;o.cy=at.cy;o.rot=at.rot||0;o.at=at.at||o.at}
   P.objs.push(o);P.changed=true;S.P=P;select(P,o);draw(P);
-  note('Drag the frame to move it. Drag ↘ to resize and rotate. Tap ⋯ for colours.');return o}
+  note('Drag the frame to move it. Drag ↘ around the signature to rotate through 360° and move it closer/farther to resize. Tap ⋯ for colours.');return o}
  function pasteAll(){
   var P=S.P,o=sigSel()&&S.selP===P?sigSel():P.objs.filter(function(z){return z.type==='sig'})[0];if(!o)return;
   o.gid=o.gid||('g'+Date.now());var n=0;
@@ -2615,11 +2615,20 @@ var ScanLib=(function(){
  function setStamp(which,on){
   var before=[];S.pages.forEach(function(P){P.objs.forEach(function(o){if(o.type==='sig')before.push([P,o,sigDims(o).band])})});
   if(which==='d')S.stampDate=!!on;else S.stampTime=!!on;
-  before.forEach(function(r){var o=r[1],nb=sigDims(o).band,dl=(nb-r[2])/2;   /* keep the signature itself where it was */
+  /* Only the DATE checkbox changes placement. Date and time always share one stamp position. */
+  if(which==='d'){
+   before.forEach(function(r){
+    var o=r[1],pick=Math.floor(Math.random()*6);
+    o.stampPos=pick;
+    o.stampRot=(Math.random()*18-9)*Math.PI/180;
+   });
+  }
+  before.forEach(function(r){var o=r[1],nb=sigDims(o).band,dl=(nb-r[2])/2;
+   /* keep the signature itself where it was */
    o.cx+=Math.sin(o.rot||0)*dl;o.cy-=Math.cos(o.rot||0)*dl;r[0].changed=true});
   try{localStorage.setItem(STKEY,JSON.stringify({d:S.stampDate,t:S.stampTime}))}catch(e){}
   redrawAll();setBar();
-  if(on)note('Stamp uses your phone\u2019s date and time from when the signature was added.')}
+  if(on)note('Stamp uses your phone\u2019s current date and time. Toggle Date to randomize its position.')}
  function readStamp(){try{var j=JSON.parse(localStorage.getItem(STKEY)||'{}');return {d:!!j.d,t:!!j.t}}catch(e){return {d:false,t:false}}}
 
  /* ---- pointer handling (one handler for every page canvas) ---- */
@@ -2663,10 +2672,11 @@ var ScanLib=(function(){
    if(o.type==='sig'){o.cx=Math.max(0,Math.min(P.w,p.x-S.drag.dx));o.cy=Math.max(0,Math.min(P.h,p.y-S.drag.dy))}
    else{o.x=p.x-S.drag.dx;o.y=p.y-S.drag.dy}
    P.changed=true;draw(P)}
-  else if(S.drag.k==='rs'&&o.type==='sig'){   /* one arrow: distance from the centre = size, angle = rotation (any angle, snaps near 0/90/180/270) */
+  else if(S.drag.k==='rs'&&o.type==='sig'){   /* one arrow supports continuous 360-degree rotation and proportional resizing */
    var vx=p.x-o.cx,vy=p.y-o.cy,dd=Math.max(1,Math.hypot(vx,vy)),d=S.drag;
    o.w=Math.max(P.w*0.06,Math.min(P.w*1.5,d.w0*dd/d.d0));
-   var r=d.r0+(Math.atan2(vy,vx)-d.a0),q=Math.round(r/(Math.PI/2))*(Math.PI/2);if(Math.abs(r-q)<0.05)r=q;
+   /* Use the handle's full angle with no 90-degree snapping, so users can rotate freely. */
+   var r=d.r0+(Math.atan2(vy,vx)-d.a0);
    o.rot=Math.atan2(Math.sin(r),Math.cos(r));P.changed=true;draw(P)}}
  function up(){if(!S)return;S.ptr=false;S.cur=null;S.drag=null;S.ptrP=null}
  function touchHit(e){
@@ -2684,10 +2694,26 @@ var ScanLib=(function(){
    x.moveTo(cx-d,cy-d);x.lineTo(cx-d,cy-d+a);x.moveTo(cx-d,cy-d);x.lineTo(cx-d+a,cy-d);x.stroke()}
   x.restore()}
  function stampDraw(x,o,d,tx){
-  var fam='"Segoe Print","Bradley Hand","Comic Sans MS","Chalkboard SE",cursive';
-  x.font='600 100px '+fam;var w100=x.measureText(tx).width||1,fs=Math.min(d.band*0.72,d.W*0.96*100/w100);
-  x.font='600 '+fs+'px '+fam;x.fillStyle=o.color||'#111827';x.textAlign='right';x.textBaseline='middle';
-  x.fillText(tx,d.W/2-d.W*0.02,-d.H/2+d.band*0.5);x.textAlign='left';x.textBaseline='alphabetic'}
+  /* Handwritten-style date/time, placed in one of six positions near/across the signature.
+     Date checkbox selects a new shared position/tilt; Time checkbox only changes visibility. */
+  var fam='"Segoe Print","Bradley Hand","Comic Sans MS","Chalkboard SE","URW Chancery L",cursive';
+  /* Keep the stamp inside the signature artwork instead of reserving a separate strip.
+     Six anchor points let it sit in different open areas of the signature loops/tails. */
+  var ih=d.ih, pos=[[0.42,0.28],[0.62,0.30],[0.32,0.43],[0.70,0.48],[0.42,0.68],[0.66,0.67]];
+  var ix=Math.max(0,Math.min(5,Number(o.stampPos)||0)),p=pos[ix],ang=Number(o.stampRot)||0;
+  x.save();
+  x.translate(-d.W/2+d.W*p[0],-d.H/2+d.band+ih*p[1]);
+  x.rotate(ang);
+  x.textAlign='center';x.textBaseline='middle';x.fillStyle=o.color||'#111111';
+  x.globalAlpha=0.90;
+  x.font='italic 500 100px '+fam;
+  var w100=x.measureText(tx).width||1;
+  /* Smaller and thinner than the previous stamp; constrain long date/time strings. */
+  var fs=Math.min(Math.max(ih*0.075,6),d.W*0.34*100/w100);
+  x.font='italic 500 '+fs+'px '+fam;
+  x.fillText(tx,0,0,Math.max(20,d.W*0.36));
+  x.restore();
+ }
  function drawObjs(x,P,objs,sel,ui){
   objs.forEach(function(o){
    if(o.type==='stroke'){x.strokeStyle=o.color;x.lineWidth=o.w;x.lineCap=x.lineJoin='round';x.beginPath();o.pts.forEach(function(p,i){i?x.lineTo(p.x,p.y):x.moveTo(p.x,p.y)});if(o.pts.length===1)x.lineTo(o.pts[0].x+.1,o.pts[0].y);x.stroke()}

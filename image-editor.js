@@ -48,7 +48,39 @@
     '.ie-sticker{font-size:25px;min-width:40px;min-height:42px;padding:4px!important}',
     '.ie-done{margin:12px auto;max-width:520px;text-align:center;padding:14px;border:1px solid #1d7be0;border-radius:14px;background:rgba(29,123,224,.08)}',
     '.ie-done strong{display:block;font-size:16px;margin-bottom:4px}',
-    '.ie-auto{min-height:1.2em}'
+    '.ie-auto{min-height:1.2em}',
+    '.ie-top{display:none}',
+    '.ie.ie-imm #ieWork{position:fixed;left:0;right:0;top:0;bottom:0;z-index:2147483000;display:flex;flex-direction:column;background:#0b1220;color:#e9eef8;padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0);overflow:hidden;box-sizing:border-box}',
+    '.ie.ie-imm .ie-top{display:flex;order:0;align-items:center;gap:6px;padding:8px 10px;background:#0b1220;border-bottom:1px solid #243049}',
+    '.ie-top button{min-height:42px;min-width:42px;padding:0 12px;border:1px solid #2c3a57;border-radius:10px;background:#16203a;color:#fff;font:600 15px/1 inherit;cursor:pointer}',
+    '.ie-top button:disabled{opacity:.4}',
+    '.ie-top .ie-done-btn{background:#16a34a;border-color:#16a34a;padding:0 12px;white-space:nowrap;flex:0 0 auto}',
+    '.ie-top .ie-mid{flex:1 1 auto;min-width:0;display:flex;align-items:center;justify-content:center;gap:6px;font-size:14px;font-weight:600;white-space:nowrap}',
+    '.ie-top .ie-ttl{overflow:hidden;text-overflow:ellipsis;color:#cbd5e6}',
+    '.ie-top .ie-pos{display:inline-block;min-width:3.4em;text-align:center}',
+    '.ie-top .ie-grp{display:flex;gap:6px}',
+    '.ie.ie-imm .ie-stagewrap{order:1;flex:1 1 auto;min-height:0;margin:0;align-items:center;overflow:hidden}',
+    '.ie.ie-imm .ie-stage{padding:0;background:transparent;border-radius:0;max-width:100%;max-height:100%}',
+    '.ie.ie-imm .ie-opts{order:2;flex:0 0 auto;max-height:44vh;overflow-y:auto;margin:0;padding:10px 12px;background:#111a2e;border-top:1px solid #243049;color:#e9eef8;justify-content:center}',
+    '.ie.ie-imm .ie-opts .ie-hint{color:#9aa7bd}',
+    '.ie.ie-imm .ie-toolbar{order:3;display:flex!important;flex-wrap:nowrap;overflow-x:auto;gap:6px;margin:0;padding:6px 8px;border-radius:0;border:0;border-top:1px solid #243049;background:#0b1220;-webkit-overflow-scrolling:touch}',
+    '.ie.ie-imm .ie-toolbar .chip{flex:0 0 auto;width:66px;min-height:48px}',
+    '@media (orientation:landscape) and (max-height:560px){.ie.ie-imm #ieWork{display:grid;grid-template-columns:minmax(0,1fr) minmax(290px,40%);grid-template-rows:auto minmax(0,1fr) auto}.ie.ie-imm .ie-top{grid-column:1 / span 2;grid-row:1}.ie.ie-imm .ie-stagewrap{grid-column:1;grid-row:2 / span 2}.ie.ie-imm .ie-opts{grid-column:2;grid-row:2;max-height:none;overflow-y:auto;border-top:0;border-left:1px solid #243049}.ie.ie-imm .ie-toolbar{grid-column:2;grid-row:3;border-left:1px solid #243049}}',
+    '.ie-txin{position:fixed;left:0;bottom:0;width:1px;height:1px;opacity:0;border:0;padding:0;margin:0;resize:none;pointer-events:none;font-size:16px;background:transparent;color:transparent}',
+    '.ie.ie-imm.ie-typing .ie-opts,.ie.ie-imm.ie-typing .ie-toolbar{display:none!important}',
+    '.ie-txbar{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:0 0 8px;width:100%}',
+    '.ie-txbar .chip:disabled{opacity:.45}',
+    '.ie-txtabs{display:flex;gap:6px;overflow-x:auto;padding:2px 0 8px;width:100%;-webkit-overflow-scrolling:touch}',
+    '.ie-txtabs .chip{flex:0 0 auto}',
+    '.ie-txpane{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;justify-content:center;width:100%}',
+    '.ie-fonts{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-height:160px;overflow-y:auto;width:100%}',
+    '.ie-fontchip{display:flex!important;flex-direction:column;align-items:center;justify-content:center;min-width:78px;min-height:52px!important;padding:5px 8px!important;line-height:1.25}',
+    '.ie-fontchip b{font-size:21px;font-weight:600}',
+    '.ie-fontchip small{font-size:10px;opacity:.7;font-family:sans-serif}',
+    '.ie-sw{width:32px;height:32px;border-radius:50%;border:2px solid #fff;padding:0;cursor:pointer;box-shadow:0 0 0 1px #64748b}',
+    '.ie-sw[aria-pressed=true]{outline:3px solid #10b981;outline-offset:1px}',
+    '.ie-txpane label{display:flex;align-items:center;gap:8px}',
+    '.ie.ie-imm .ie-rotate-row,.ie.ie-imm #ieHistory,.ie.ie-imm .ie-actions,.ie.ie-imm .ie-done,.ie.ie-imm .ie-info,.ie.ie-imm #ieQrow,.ie.ie-imm [aria-label=\'Save as\']{display:none!important}'
   ].join('\n');
 
   var TOOLS = [
@@ -68,7 +100,14 @@
     '<div class="ie-row" id="ieResumeRow" hidden><button type="button" class="chip" id="ieResume">↺ Resume last edit</button></div>' +
     '<p class="ie-hint" id="ieMsg" role="status" hidden></p>' +
     '<div id="ieWork" hidden>' +
+    '<div class="ie-top" id="ieTop">' +
+    '<button type="button" class="ie-done-btn" id="ieTopDone">✓ Done</button>' +
+    '<div class="ie-mid"><span class="ie-ttl" id="ieTitle"></span>' +
+    '<span id="ieNav" hidden><button type="button" id="iePrev" aria-label="Previous image">‹</button> <span class="ie-pos" id="iePos"></span> <button type="button" id="ieNext" aria-label="Next image">›</button></span></div>' +
+    '<div class="ie-grp"><button type="button" id="ieTopUndo" aria-label="Undo" disabled>↶</button><button type="button" id="ieTopRedo" aria-label="Redo" disabled>↷</button><button type="button" id="ieTopRot" aria-label="Rotate">↻</button></div>' +
+    '</div>' +
     '<div class="ie-stagewrap"><div class="ie-stage"><canvas id="ieCv" aria-label="Image being edited"></canvas></div></div>' +
+    '<textarea class="ie-txin" id="ieTxIn" rows="1" autocomplete="off" autocapitalize="sentences" spellcheck="false" aria-label="Type your text"></textarea>' +
     '<div class="ie-rotate-row"><button type="button" class="btn" id="ieRotate">↻ Rotate</button></div>' +
     '<div class="ie-toolbar" id="ieTools" role="toolbar" aria-label="Editing tools"></div>' +
     '<div class="ie-opts" id="ieOpts"></div>' +
@@ -112,10 +151,15 @@
     // ---------------------------------------------------------------- state
     var S = { base: null, orig: null, origBlob: null, annots: [], sel: -1, adj: { b: 0, c: 0 }, wm: newWm(), name: 'photo', tool: null, itemId: null, itemType: '', loadedFile: null, loadingFile: null, writing: false };
     var P = { aspect: null, color: '#e53935', lw: 6, fill: false, text: '', textColor: '#ffffff', textSize: 7, bold: true,
-              blurStyle: 'blur', blurStrength: 14, fmt: 'png', q: 92, imgSize: 40, imgOpacity: 100 };
+              blurStyle: 'blur', blurStrength: 14, fmt: 'png', q: 92, imgSize: 40, imgOpacity: 100,
+              ttab: 'font',
+              ts: { f: 'sans', b: 1, i: 0, u: 0, al: 'center', c: '#ffffff', g: null, sk: 0, skc: '#000000', sh: 1, shc: '#000000', shb: 0.08, bg: '', bgc: '#000000', bga: 0.6, ls: 0, lh: 0, skw: 0, op: 100 } };
     var hist = [], redo = [], autoDirty = false, saveT = null, IMGS = {}, imgSeq = 0;
     var crop = null, drag = null, tmp = null, blurRect = null, stickerCategory = 'smileys';
     var K = 1, CK = 1, view = null, viewKey = '', baseId = 0, optEditing = false;
+    function shown() { return root.isConnected && !root.closest('[hidden]'); }   // is the Edit tab on screen? (offsetParent is null for display:contents)
+    var imm = false, ieEl = root.querySelector('.ie') || root, stageEl = root.querySelector('.ie-stagewrap');
+    var ptrs = {}, txEditing = false, caretOn = true, caretT = 0, txNewHist = false, pendingFocus = false;   // text tool: pointers, keyboard editing, blinking caret   // imm = the full-screen editing window
 
     function newWm() { return { on: false, type: 'text', text: '', color: '#ffffff', size: 8, opacity: 55, pos: 'br', img: null }; }
     function cloneWm(w) { return { on: w.on, type: w.type, text: w.text, color: w.color, size: w.size, opacity: w.opacity, pos: w.pos, img: w.img }; }
@@ -124,9 +168,10 @@
     // One single, smooth scroll (several scroll calls cancel each other in mobile browsers).
     function revealEditor() {
       var t = root.querySelector('.ie-stagewrap');
-      if (!t || workEl.hidden || root.offsetParent === null) return;
+      if (!t || workEl.hidden || !shown()) return;
       var bar = document.querySelector('.bar'), hdr = (bar && bar.offsetHeight) || 64, vh = window.innerHeight;
       var top = t.getBoundingClientRect().top;
+      if (imm) return;
       if (top >= hdr && top <= vh * 0.3) return;   // picture already comfortably in view
       var y = Math.max(0, window.pageYOffset + top - hdr - 12);
       var calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -146,6 +191,7 @@
     }
     async function loadFile(file, draft) {
       if (!file) return;
+      stopTyping();
       if (draft && draft.id && S.loadingFile === file) return;
       S.loadingFile = file;
       say('');
@@ -171,7 +217,8 @@
         workEl.hidden = false;
         $('ieResumeRow').hidden = true; doneEl.hidden = true; autoEl.textContent = '';
         say(s < 1 ? 'Large photo reduced to ' + c.width + '×' + c.height + ' for smooth editing.' : '');
-        setTool(root.dataset.startTool || null);   // a landing page can pre-select a tool (e.g. Watermark); otherwise NO tool is selected
+        setTool(imm ? S.tool : (root.dataset.startTool || null));   // a landing page can pre-select a tool (e.g. Watermark); inside the full-screen window the current tool stays
+        updateNav();
         syncHist();
         infoEl.textContent = '';
         // Auto-scroll (same idea as Compress / Resize): after a picture is loaded, bring the picture and the tool panel into view.
@@ -223,7 +270,7 @@
         workEl.hidden = true; say('Select images above to start editing.');
         return;
       }
-      if (S.itemId === c.id && S.loadedFile === c.f) { if (S.base && root.offsetParent !== null) { layout(); render(); } return; }
+      if (S.itemId === c.id && S.loadedFile === c.f) { if (S.base && shown()) { layout(); render(); } return; }
       var pending;
       if (S.base && autoDirty && S.itemId && S.itemId !== c.id) pending = flush();
       else { autoDirty = false; pending = Promise.resolve(); }
@@ -249,13 +296,14 @@
     function snapshot() { return { base: S.base, annots: JSON.parse(JSON.stringify(S.annots)), adj: { b: S.adj.b, c: S.adj.c }, wm: cloneWm(S.wm) }; }
     function pushHist() { hist.push(snapshot()); if (hist.length > HIST) hist.shift(); redo = []; autoDirty = true; if (doneEl) doneEl.hidden = true; syncHist(); }
     function restore(s) {
+      stopTyping();
       S.base = s.base; S.annots = s.annots; S.adj = s.adj; S.wm = s.wm; S.sel = -1; crop = null; tmp = null; autoDirty = true;
       if (S.tool === 'crop') initCrop();
       layout(); render(); renderOpts(); syncHist();
     }
     function undo() { if (!hist.length) return; redo.push(snapshot()); restore(hist.pop()); }
     function redoOp() { if (!redo.length) return; hist.push(snapshot()); restore(redo.pop()); }
-    function syncHist() { $('ieUndo').disabled = !hist.length; $('ieRedo').disabled = !redo.length; }
+    function syncHist() { $('ieUndo').disabled = !hist.length; $('ieRedo').disabled = !redo.length; $('ieTopUndo').disabled = !hist.length; $('ieTopRedo').disabled = !redo.length; }
     function resetAll() {
       if (!S.orig) return;
       pushHist();
@@ -267,10 +315,13 @@
     // ---------------------------------------------------------------- layout / render
     function layout() {
       if (!S.base) return;
-      var wrapW = (root.clientWidth || 340) - 44;
-      var availW = clamp(wrapW, 220, 1200);
-      var availH = clamp(window.innerHeight * 0.82, 280, 980);
-      var s = Math.min(availW / S.base.width, availH / S.base.height, 2);
+      var availW, availH;
+      if (imm && stageEl && stageEl.clientHeight > 40) {      // full-screen window: fill the space between the top bar and the options
+        availW = clamp(stageEl.clientWidth - 12, 100, 2600); availH = clamp(stageEl.clientHeight - 12, 100, 2600);
+      } else {
+        availW = clamp((root.clientWidth || 340) - 44, 220, 1200); availH = clamp(window.innerHeight * 0.82, 280, 980);
+      }
+      var s = Math.min(availW / S.base.width, availH / S.base.height, imm ? 4 : 2);
       var cssW = Math.max(40, S.base.width * s), cssH = Math.max(40, S.base.height * s);
       cv.style.width = cssW + 'px'; cv.style.height = cssH + 'px';
       cv.width = Math.round(cssW * dpr); cv.height = Math.round(cssH * dpr);
@@ -302,30 +353,185 @@
       viewKey = key;
     }
 
-    var mctx = document.createElement('canvas').getContext('2d');
-    function fontOf(a) { return (a.b ? 'bold ' : '') + a.s + 'px sans-serif'; }
+    // ---------------------------------------------------------------- text engine
+    // A text object: { t:'text', x, y (top-left of the unrotated box), s (font px), c, b, text,
+    //   f font, i italic, u underline, al align, g [c1,c2] gradient, sk stroke (x size), skc, sh shadow 0/1, shc, shb (x size),
+    //   bg box colour, bga box alpha, ls letter spacing (x size), lh line height, rot (rad), skw (deg), op (%), lock }
+    // Old texts and emoji stickers have none of the new fields and keep their old look.
+    var FONTS = [
+      { k: 'sans', n: 'Default', css: 'sans-serif', lang: 'en', lh: 1.2 },
+      { k: 'serif', n: 'Serif', css: 'Georgia,"Times New Roman",serif', lang: 'en', lh: 1.2 },
+      { k: 'mono', n: 'Mono', css: '"Courier New",monospace', lang: 'en', lh: 1.2 },
+      { k: 'Roboto', n: 'Roboto', g: 'Roboto', w: ':wght@400;700', css: 'Roboto,sans-serif', lang: 'en', lh: 1.2 },
+      { k: 'Poppins', n: 'Poppins', g: 'Poppins', w: ':wght@400;700', css: 'Poppins,sans-serif', lang: 'en', lh: 1.25 },
+      { k: 'Montserrat', n: 'Montserrat', g: 'Montserrat', w: ':wght@400;700', css: 'Montserrat,sans-serif', lang: 'en', lh: 1.2 },
+      { k: 'Oswald', n: 'Oswald', g: 'Oswald', w: ':wght@400;700', css: 'Oswald,sans-serif', lang: 'en', lh: 1.2 },
+      { k: 'Playfair', n: 'Playfair', g: 'Playfair Display', w: ':wght@400;700', css: '"Playfair Display",serif', lang: 'en', lh: 1.2 },
+      { k: 'Bebas', n: 'Bebas Neue', g: 'Bebas Neue', w: '', css: '"Bebas Neue",sans-serif', lang: 'en', lh: 1.1 },
+      { k: 'Anton', n: 'Anton', g: 'Anton', w: '', css: 'Anton,sans-serif', lang: 'en', lh: 1.15 },
+      { k: 'Pacifico', n: 'Pacifico', g: 'Pacifico', w: '', css: 'Pacifico,cursive', lang: 'en', lh: 1.4 },
+      { k: 'Lobster', n: 'Lobster', g: 'Lobster', w: '', css: 'Lobster,cursive', lang: 'en', lh: 1.25 },
+      { k: 'Dancing', n: 'Dancing Script', g: 'Dancing Script', w: ':wght@400;700', css: '"Dancing Script",cursive', lang: 'en', lh: 1.25 },
+      { k: 'Caveat', n: 'Caveat', g: 'Caveat', w: ':wght@400;700', css: 'Caveat,cursive', lang: 'en', lh: 1.15 },
+      { k: 'Marker', n: 'Marker', g: 'Permanent Marker', w: '', css: '"Permanent Marker",cursive', lang: 'en', lh: 1.25 },
+      { k: 'Nastaliq', n: 'Nastaliq', g: 'Noto Nastaliq Urdu', w: ':wght@400;700', css: '"Noto Nastaliq Urdu","Jameel Noori Nastaleeq",serif', lang: 'ur', lh: 1.9 },
+      { k: 'Naskh', n: 'Naskh', g: 'Noto Naskh Arabic', w: ':wght@400;700', css: '"Noto Naskh Arabic","Noto Nastaliq Urdu",serif', lang: 'ur', lh: 1.5 },
+      { k: 'Amiri', n: 'Amiri', g: 'Amiri', w: ':wght@400;700', css: 'Amiri,serif', lang: 'ur', lh: 1.5 },
+      { k: 'Lateef', n: 'Lateef', g: 'Lateef', w: ':wght@400;700', css: 'Lateef,serif', lang: 'ur', lh: 1.4 },
+      { k: 'Ruqaa', n: 'Aref Ruqaa', g: 'Aref Ruqaa', w: ':wght@400;700', css: '"Aref Ruqaa",serif', lang: 'ur', lh: 1.5 },
+      { k: 'Reem', n: 'Reem Kufi', g: 'Reem Kufi', w: ':wght@400;700', css: '"Reem Kufi",sans-serif', lang: 'ur', lh: 1.3 },
+      { k: 'Cairo', n: 'Cairo', g: 'Cairo', w: ':wght@400;700', css: 'Cairo,sans-serif', lang: 'ur', lh: 1.4 },
+      { k: 'Tajawal', n: 'Tajawal', g: 'Tajawal', w: ':wght@400;700', css: 'Tajawal,sans-serif', lang: 'ur', lh: 1.4 }
+    ];
+    var fontLoaded = {}, fontPrev = {}, RTL_RE = /[\u0590-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFF]/;
+    function fontDef(a) { var k = a.f || 'sans'; for (var i = 0; i < FONTS.length; i++) if (FONTS[i].k === k) return FONTS[i]; return FONTS[0]; }
+    function gUrl(f, textOnly) {   // Google Fonts stylesheet; "text=" returns a tiny file with just the preview letters
+      return 'https://fonts.googleapis.com/css2?family=' + encodeURIComponent(f.g).replace(/%20/g, '+') + (textOnly ? '' : f.w) + (textOnly ? '&text=' + encodeURIComponent('Aa اردو') : '') + '&display=swap';
+    }
+    function previewFont(f) {      // only for list previews, and never after the full font is in (a subset must not replace it)
+      if (!f.g || fontLoaded[f.k] || fontPrev[f.k]) return; fontPrev[f.k] = 1;
+      var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = gUrl(f, true); document.head.appendChild(l);
+    }
+    function useFont(f, done) {    // loads the whole font so every letter of the user's text is drawn with it
+      if (!f.g || fontLoaded[f.k] === 2) { if (done) done(true); return; }
+      if (fontLoaded[f.k] === 1) { if (done) setTimeout(function () { done(fontLoaded[f.k] === 2); }, 300); return; }
+      fontLoaded[f.k] = 1;
+      var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = gUrl(f, false);
+      l.onerror = function () { fontLoaded[f.k] = 0; if (done) done(false); };
+      l.onload = function () {
+        var sample = f.lang === 'ur' ? 'اردو متن عید مبارک' : 'Aa Bb Cc 123';
+        var jobs = [document.fonts.load('400 40px ' + f.css, sample), document.fonts.load('700 40px ' + f.css, sample)];
+        Promise.all(jobs).then(function () { fontLoaded[f.k] = 2; if (done) done(true); }, function () { fontLoaded[f.k] = 2; if (done) done(true); });
+      };
+      document.head.appendChild(l);
+    }
+    function fontCss(a) { return (a.i ? 'italic ' : '') + (a.b ? '700 ' : '400 ') + Math.max(1, a.s) + 'px ' + fontDef(a).css; }
+    function fontOf(a) { return fontCss(a); }
+    var mctx = document.createElement('canvas').getContext('2d'), LS_OK = ('letterSpacing' in mctx);
+    function lsPx(a) { return (a.ls || 0) * a.s; }
+    function measureLine(ctx, a, str, rtl) {
+      ctx.font = fontCss(a); try { ctx.direction = rtl ? 'rtl' : 'ltr'; } catch (e) { /* old browsers */ }
+      var px = lsPx(a), w;
+      if (LS_OK) { ctx.letterSpacing = px + 'px'; w = ctx.measureText(str).width; ctx.letterSpacing = '0px'; return Math.max(0, w - (str ? px : 0)); }
+      w = ctx.measureText(str).width; if (px && !rtl) w += px * Math.max(0, str.length - 1); return Math.max(0, w);
+    }
+    function drawLine(ctx, a, str, x, y, rtl, stroke) {
+      try { ctx.direction = rtl ? 'rtl' : 'ltr'; } catch (e) { /* old browsers */ }
+      var px = lsPx(a);
+      if (LS_OK) { ctx.letterSpacing = px + 'px'; if (stroke) ctx.strokeText(str, x, y); else ctx.fillText(str, x, y); ctx.letterSpacing = '0px'; return; }
+      if (px && !rtl) { var cx = x; for (var i = 0; i < str.length; i++) { var ch = str.charAt(i); if (stroke) ctx.strokeText(ch, cx, y); else ctx.fillText(ch, cx, y); cx += ctx.measureText(ch).width + px; } return; }
+      if (stroke) ctx.strokeText(str, x, y); else ctx.fillText(str, x, y);
+    }
+    function txLayout(a) {
+      var str = String(a.text == null ? '' : a.text), raw = str.length ? str : 'Type text';
+      var lines = raw.split('\n').map(function (t) { var rtl = RTL_RE.test(t); return { t: t, rtl: rtl, w: measureLine(mctx, a, t, rtl) }; });
+      var w = 0; lines.forEach(function (l) { w = Math.max(w, l.w); });
+      var lh = (a.lh || fontDef(a).lh || 1.2) * a.s;
+      return { lines: lines, w: w, h: lines.length * lh, lh: lh, empty: !str.length };
+    }
     function textBox(a) {
-      mctx.font = fontOf(a);
-      var lines = String(a.text).split('\n'), w = 0;
-      lines.forEach(function (l) { w = Math.max(w, mctx.measureText(l).width); });
-      return { x: a.x, y: a.y, w: w, h: lines.length * a.s * 1.2 };
+      var L = txLayout(a), pad = a.bg ? a.s * 0.3 : 0;
+      return { x: a.x, y: a.y, w: L.w + 2 * pad, h: L.h + 2 * pad, pad: pad, L: L };
+    }
+    function centerOf(a) { var b = textBox(a); return { x: b.x + b.w / 2, y: b.y + b.h / 2 }; }
+    function recenter(a, c) { var b = textBox(a); a.x = c.x - b.w / 2; a.y = c.y - b.h / 2; }
+    function lineLeft(a, b, ln) { var al = a.al || 'left'; return al === 'center' ? -ln.w / 2 : al === 'right' ? b.w / 2 - b.pad - ln.w : -b.w / 2 + b.pad; }
+    function rrect(ctx, x, y, w, h, r) {
+      r = Math.min(r, w / 2, h / 2); ctx.beginPath();
+      ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y); ctx.arcTo(x + w, y, x + w, y + r, r); ctx.lineTo(x + w, y + h - r); ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+      ctx.lineTo(x + r, y + h); ctx.arcTo(x, y + h, x, y + h - r, r); ctx.lineTo(x, y + r); ctx.arcTo(x, y, x + r, y, r); ctx.closePath();
+    }
+    function drawText(ctx, a, ui) {
+      var b = textBox(a), L = b.L;
+      if (L.empty && !ui) return;
+      ctx.save();
+      ctx.globalAlpha *= clamp((a.op == null ? 100 : a.op) / 100, 0.05, 1);
+      ctx.translate(b.x + b.w / 2, b.y + b.h / 2);
+      if (a.rot) ctx.rotate(a.rot);
+      if (a.skw) ctx.transform(1, 0, Math.tan(a.skw * Math.PI / 180), 1, 0, 0);
+      if (a.bg && !L.empty) { ctx.fillStyle = hexA(a.bg, a.bga == null ? 0.6 : a.bga); rrect(ctx, -b.w / 2, -b.h / 2, b.w, b.h, a.s * 0.22); ctx.fill(); }
+      ctx.font = fontCss(a); ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+      var fill = a.c;
+      if (a.g && a.g.length === 2) { var gr = ctx.createLinearGradient(-b.w / 2, 0, b.w / 2, 0); gr.addColorStop(0, a.g[0]); gr.addColorStop(1, a.g[1]); fill = gr; }
+      if (L.empty) fill = 'rgba(255,255,255,.7)';
+      var legacy = a.sh === undefined;
+      L.lines.forEach(function (ln, i) {
+        var y = -b.h / 2 + b.pad + (i + 0.5) * L.lh, x = lineLeft(a, b, ln);
+        ctx.font = fontCss(a);
+        if (a.sh && !L.empty) { ctx.shadowColor = hexA(a.shc || '#000000', 0.6); ctx.shadowBlur = a.s * (a.shb == null ? 0.08 : a.shb); ctx.shadowOffsetX = ctx.shadowOffsetY = a.s * 0.03; }
+        else if (legacy) { ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = Math.max(1, a.s * 0.08); }
+        if (a.sk > 0 && !L.empty) {
+          ctx.lineWidth = a.sk * a.s; ctx.strokeStyle = a.skc || '#000000'; ctx.lineJoin = 'round'; ctx.miterLimit = 2;
+          drawLine(ctx, a, ln.t, x, y, ln.rtl, true);
+          ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetX = ctx.shadowOffsetY = 0;
+        }
+        ctx.fillStyle = fill; drawLine(ctx, a, ln.t, x, y, ln.rtl, false);
+        ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetX = ctx.shadowOffsetY = 0;
+        if (a.u && !L.empty) { ctx.fillStyle = typeof fill === 'string' ? fill : a.g[0]; ctx.fillRect(x, y + a.s * 0.42, ln.w, Math.max(1, a.s * 0.065)); }
+      });
+      ctx.restore();
+    }
+    function hitTextBox(a, p, m) {
+      var b = textBox(a), dx = p.x - (b.x + b.w / 2), dy = p.y - (b.y + b.h / 2), th = a.rot || 0, c = Math.cos(th), sn = Math.sin(th);
+      var lx = dx * c + dy * sn, ly = -dx * sn + dy * c;
+      return Math.abs(lx) <= b.w / 2 + m && Math.abs(ly) <= b.h / 2 + m;
+    }
+    function txPts(a) {
+      var b = textBox(a), pad = 8 / CK, hw = b.w / 2 + pad, hh = b.h / 2 + pad, cx = b.x + b.w / 2, cy = b.y + b.h / 2, th = a.rot || 0, c = Math.cos(th), sn = Math.sin(th);
+      function r(lx, ly) { return { x: cx + lx * c - ly * sn, y: cy + lx * sn + ly * c }; }
+      var Wb = S.base.width, Hb = S.base.height, mg = 18 / CK;
+      function cl(q) { return { x: clamp(q.x, mg, Wb - mg), y: clamp(q.y, mg, Hb - mg) }; }
+      return { x: cl(r(-hw, -hh)), e: cl(r(hw, -hh)), r: cl(r(hw, hh)), l: cl(r(-hw, hh)), c: { x: cx, y: cy }, hw: hw, hh: hh };
+    }
+    function txHandle(a, p) {
+      var pts = txPts(a), R = 28 / CK, best = null, bd = 1e9;
+      ['x', 'e', 'r'].forEach(function (k) { var d = Math.hypot(p.x - pts[k].x, p.y - pts[k].y); if (d < R && d < bd) { bd = d; best = k; } });
+      return best;
+    }
+    function drawHandle(ctx, cx, cy, r, type) {
+      ctx.save(); ctx.fillStyle = '#fff'; ctx.strokeStyle = '#10b981'; ctx.lineWidth = r * 0.16; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.strokeStyle = '#10b981'; ctx.fillStyle = '#10b981'; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.lineWidth = r * 0.2; var d = r * 0.42;
+      if (type === 'x') { ctx.beginPath(); ctx.moveTo(cx - d, cy - d); ctx.lineTo(cx + d, cy + d); ctx.moveTo(cx + d, cy - d); ctx.lineTo(cx - d, cy + d); ctx.stroke(); }
+      else if (type === 'e') { ctx.beginPath(); ctx.moveTo(cx - d, cy + d); ctx.lineTo(cx - d * 0.2, cy + d * 0.9); ctx.lineTo(cx + d, cy - d * 0.3); ctx.lineTo(cx + d * 0.3, cy - d); ctx.lineTo(cx - d * 0.9, cy + d * 0.2); ctx.closePath(); ctx.stroke(); }
+      else { var q = r * 0.5; ctx.beginPath(); ctx.moveTo(cx - d, cy - d); ctx.lineTo(cx + d, cy + d); ctx.moveTo(cx + d, cy + d); ctx.lineTo(cx + d, cy + d - q); ctx.moveTo(cx + d, cy + d); ctx.lineTo(cx + d - q, cy + d); ctx.moveTo(cx - d, cy - d); ctx.lineTo(cx - d, cy - d + q); ctx.moveTo(cx - d, cy - d); ctx.lineTo(cx - d + q, cy - d); ctx.stroke(); }
+      ctx.restore();
+    }
+    function caretOf(a) {
+      var ta = $('ieTxIn'); if (!ta) return null;
+      var str = String(a.text || ''), idx = clamp(ta.selectionEnd == null ? str.length : ta.selectionEnd, 0, str.length), before = str.slice(0, idx);
+      var li = before.split('\n').length - 1, L = txLayout(a), ln = L.lines[li]; if (!ln || L.empty && false) return null;
+      var col = before.length - (before.lastIndexOf('\n') + 1), pw = measureLine(mctx, a, ln.t.slice(0, col), ln.rtl);
+      return { li: li, ln: ln, w: pw };
+    }
+    function drawTextFrame(ctx, a) {
+      var b = textBox(a), pts = txPts(a), pad = 8 / CK;
+      ctx.save(); ctx.translate(pts.c.x, pts.c.y); ctx.rotate(a.rot || 0);
+      ctx.strokeStyle = '#10b981'; ctx.lineWidth = 2.5 / CK; if (a.lock) ctx.setLineDash([6 / CK, 5 / CK]);
+      ctx.strokeRect(-pts.hw, -pts.hh, 2 * pts.hw, 2 * pts.hh); ctx.setLineDash([]);
+      if (txEditing && caretOn && !a.lock) {
+        var cr = caretOf(a);
+        if (cr) {
+          var left = lineLeft(a, b, cr.ln), x = cr.ln.rtl ? left + cr.ln.w - cr.w : left + cr.w, y = -b.h / 2 + b.pad + (cr.li + 0.5) * b.L.lh;
+          ctx.fillStyle = '#10b981'; ctx.fillRect(x - 1.2 / CK, y - b.L.lh * 0.42, 2.4 / CK, b.L.lh * 0.84);
+        }
+      }
+      ctx.restore();
+      var hr = 15 / CK; drawHandle(ctx, pts.x.x, pts.x.y, hr, 'x'); drawHandle(ctx, pts.e.x, pts.e.y, hr, 'e'); drawHandle(ctx, pts.r.x, pts.r.y, hr, 'r');
+      if (a.lock) { ctx.save(); ctx.font = (18 / CK) + 'px sans-serif'; ctx.textBaseline = 'middle'; ctx.textAlign = 'center'; ctx.fillText('🔒', pts.l.x, pts.l.y); ctx.restore(); }
     }
 
     function drawAnnots(ctx, list, ui) {
       ctx.save();
       ctx.lineCap = 'round'; ctx.lineJoin = 'round';
       list.forEach(function (a, i) {
-        drawOne(ctx, a);
+        drawOne(ctx, a, ui);
         if (ui && i === S.sel) outline(ctx, a);
       });
       ctx.restore();
     }
-    function drawOne(ctx, a) {
+    function drawOne(ctx, a, ui) {
       if (a.t === 'text') {
-        ctx.font = fontOf(a); ctx.textBaseline = 'top'; ctx.fillStyle = a.c;
-        ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = Math.max(1, a.s * 0.08);
-        String(a.text).split('\n').forEach(function (l, i) { ctx.fillText(l, a.x, a.y + i * a.s * 1.2); });
-        ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0;
+        drawText(ctx, a, ui);
       } else if (a.t === 'draw') {
         if (a.points && a.points.length) { ctx.strokeStyle = a.c; ctx.lineWidth = a.lw; ctx.beginPath(); ctx.moveTo(a.points[0].x, a.points[0].y); for (var pi = 1; pi < a.points.length; pi++) ctx.lineTo(a.points[pi].x, a.points[pi].y); ctx.stroke(); }
       } else if (a.t === 'img') {
@@ -360,6 +566,7 @@
       return { x: Math.min(a.x, a.x + a.w), y: Math.min(a.y, a.y + a.h), w: Math.abs(a.w), h: Math.abs(a.h) };
     }
     function outline(ctx, a) {
+      if (a.t === 'text' && S.tool === 'text') { drawTextFrame(ctx, a); return; }
       var b = bbox(a), pad = 6 / K;
       ctx.save(); ctx.setLineDash([8 / K, 6 / K]); ctx.lineWidth = 2 / K; ctx.strokeStyle = '#1d7be0';
       ctx.strokeRect(b.x - pad, b.y - pad, b.w + 2 * pad, b.h + 2 * pad); ctx.restore();
@@ -435,13 +642,16 @@
 
     // ---------------------------------------------------------------- tools
     function setTool(t) {
+      blurTx();
       S.tool = t; S.sel = -1; tmp = null; blurRect = null; crop = null;
       Array.prototype.forEach.call($('ieTools').children, function (b) { b.setAttribute('aria-pressed', b.dataset.t === t ? 'true' : 'false'); });
-      cv.style.touchAction = (t === 'crop' || t === 'text' || t === 'arrow' || t === 'rect' || t === 'circle' || t === 'blur' || t === 'image') ? 'none' : 'pan-y';
+      cv.style.touchAction = (imm || t === 'crop' || t === 'text' || t === 'arrow' || t === 'rect' || t === 'circle' || t === 'blur' || t === 'image') ? 'none' : 'pan-y';
+      var tt = $('ieTitle'); if (tt) { var tl = TOOLS.filter(function (x) { return x[0] === t; })[0]; tt.textContent = tl ? String(tl[1]).replace(/^\S+\s+/, '') : ''; }
       cv.style.cursor = t === 'crop' || t === 'blur' || t === 'arrow' || t === 'rect' || t === 'circle' ? 'crosshair' : t === 'text' ? 'text' : t === 'image' ? 'move' : 'default';
       // Crop starts with no overlay; the user chooses a preset to place one.
       if (t !== 'crop') crop = null;
       layout(); render(); renderOpts();
+      if (imm) window.requestAnimationFrame(function () { if (imm && S.base) { layout(); render(); } });   // the options panel height changed with the tool
     }
 
     function initCrop() {
@@ -565,7 +775,7 @@
         var a = S.annots[i], b = bbox(a);
         if (a.t === 'arrow') { if (segDist(p, a) <= tol + a.lw / 2) return i; }
         else if (a.t === 'img') { if (p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h) return i; }
-        else if (a.t === 'text') { if (p.x >= b.x - tol / 2 && p.x <= b.x + b.w + tol / 2 && p.y >= b.y - tol / 2 && p.y <= b.y + b.h + tol / 2) return i; }
+        else if (a.t === 'text') { if (hitTextBox(a, p, tol / 2)) return i; }
         else if (a.t === 'rect') {
           var inOuter = p.x >= b.x - tol && p.x <= b.x + b.w + tol && p.y >= b.y - tol && p.y <= b.y + b.h + tol;
           var inInner = p.x > b.x + tol && p.x < b.x + b.w - tol && p.y > b.y + tol && p.y < b.y + b.h - tol;
@@ -582,6 +792,7 @@
     cv.addEventListener('pointerdown', function (e) {
       if (!S.base) return;
       var p = pt(e), t = S.tool;
+      ptrs[e.pointerId] = { x: e.clientX, y: e.clientY }; pendingFocus = false;
       try { cv.setPointerCapture(e.pointerId); } catch (x) { /* ignore */ }
       if (t === 'crop') {
         var cx = [[crop.x, crop.y], [crop.x + crop.w, crop.y], [crop.x, crop.y + crop.h], [crop.x + crop.w, crop.y + crop.h]], best = -1, bd = 28 / CK;
@@ -594,7 +805,9 @@
       } else if (t === 'draw') {
         tmp = { t: 'draw', points: [{x:p.x,y:p.y}], c: P.color, lw: lwPx() };
         drag = { mode: 'draw', x0: p.x, y0: p.y };
-      } else if (t === 'text' || t === 'arrow' || t === 'rect' || t === 'circle' || t === 'image') {
+      } else if (t === 'text') {
+        textDown(p);
+      } else if (t === 'arrow' || t === 'rect' || t === 'circle' || t === 'image') {
         var h = hit(p);
         if (h >= 0) {
           S.sel = h; var a = S.annots[h];
@@ -603,11 +816,6 @@
           else if (a.t === 'img') { P.imgOpacity = a.o == null ? 100 : a.o; P.imgSize = a.w / S.base.width * 100; }
           else { P.color = a.c; P.lw = a.lw / Math.max(1, S.base.width / 800); if (a.t !== 'arrow') P.fill = !!a.fill; }
           renderOpts();
-        } else if (t === 'text') {
-          pushHist();
-          var txt = P.text || 'Text';
-          S.annots.push({ t: 'text', x: p.x, y: p.y, s: S.base.width * P.textSize / 100, c: P.textColor, b: P.bold, text: txt });
-          S.sel = S.annots.length - 1; drag = null; renderOpts();
         } else if (t === 'image') {
           S.sel = -1; drag = null; renderOpts();
         } else {
@@ -620,8 +828,18 @@
     });
 
     cv.addEventListener('pointermove', function (e) {
+      if (ptrs[e.pointerId]) ptrs[e.pointerId] = { x: e.clientX, y: e.clientY };
       if (!drag || !S.base) return;
       var p = pt(e), W = S.base.width, H = S.base.height;
+      if (drag.mode === 'tscale') {      // one arrow: distance from the centre = size, angle = rotation (any angle)
+        var tdx = p.x - drag.c.x, tdy = p.y - drag.c.y, tdist = Math.max(1, Math.hypot(tdx, tdy));
+        drag.a.s = clamp(drag.s0 * tdist / drag.d0, W * 0.015, W * 0.7); drag.a.rot = drag.r0 + (Math.atan2(tdy, tdx) - drag.a0); recenter(drag.a, drag.c); render(); return;
+      }
+      if (drag.mode === 'pinch') {       // two fingers: size and rotation
+        var ks = Object.keys(ptrs); if (ks.length < 2) return;
+        var q1 = ptrs[ks[0]], q2 = ptrs[ks[1]], dd = Math.max(10, Math.hypot(q2.x - q1.x, q2.y - q1.y)), an = Math.atan2(q2.y - q1.y, q2.x - q1.x);
+        drag.a.s = clamp(drag.s0 * dd / drag.d0, W * 0.015, W * 0.7); drag.a.rot = drag.r0 + (an - drag.a0); recenter(drag.a, drag.c); render(); return;
+      }
       if (S.tool === 'crop') drag.changed = true;
       if (drag.mode === 'corner') setCropFromAnchor(drag.ax, drag.ay, clamp(p.x, 0, W), clamp(p.y, 0, H));
       else if (drag.mode === 'move' && S.tool === 'crop') { crop.x = clamp(p.x - drag.ox, 0, W - crop.w); crop.y = clamp(p.y - drag.oy, 0, H - crop.h); }
@@ -630,17 +848,23 @@
         if (tmp.t === 'arrow') { tmp.x2 = p.x; tmp.y2 = p.y; } else if (tmp.t === 'draw') { tmp.points.push({x:p.x,y:p.y}); } else { tmp.w = p.x - drag.x0; tmp.h = p.y - drag.y0; }
       } else if (drag.mode === 'move') {
         var a = S.annots[S.sel], dx = p.x - drag.ox, dy = p.y - drag.oy, s0 = drag.start;
+        if (a && a.lock) return;
         if (!drag.moved && Math.hypot(dx, dy) * CK < 3) return;
         if (!drag.moved) { drag.moved = true; var keep = S.annots[S.sel]; S.annots[S.sel] = s0; pushHist(); S.annots[S.sel] = keep; }
         if (a.t === 'arrow') { a.x1 = s0.x1 + dx; a.y1 = s0.y1 + dy; a.x2 = s0.x2 + dx; a.y2 = s0.y2 + dy; }
-        else { a.x = s0.x + dx; a.y = s0.y + dy; }
+        else {
+          a.x = s0.x + dx; a.y = s0.y + dy;
+          if (a.t === 'text') { var tb = textBox(a); a.x = clamp(a.x, -tb.w * 0.5, S.base.width - tb.w * 0.5); a.y = clamp(a.y, -tb.h * 0.5, S.base.height - tb.h * 0.5); }
+        }
       }
       render();
     });
 
     function endDrag(e) {
+      delete ptrs[e.pointerId];
       if (!drag) return;
       var d = drag; drag = null;
+      if (d.mode === 'move' && d.text && !d.moved && S.tool === 'text') { var tt = selText(); if (tt && !tt.lock && !txEditing) pendingFocus = true; }
       try { cv.releasePointerCapture(e.pointerId); } catch (x) { /* ignore */ }
       // Moving/resizing the crop frame only adjusts it; Save Crop applies it explicitly.
       if (d.mode === 'blur') { var r = blurRect; blurRect = null; if (r && r.w * CK > 6 && r.h * CK > 6) applyBlur(r); }
@@ -652,6 +876,12 @@
       render();
     }
     cv.addEventListener('pointerup', endDrag);
+    cv.addEventListener('click', function () { if (pendingFocus) { pendingFocus = false; focusTx(); } });   // the keyboard must open from a real tap
+    function keepTyping(e) {           // a tap on the text being edited must not close the keyboard
+      if (!txEditing) return; var a = selText(); if (!a) return; var tp = e.touches ? e.touches[0] : e; if (!tp) return; var q = pt(tp);
+      if ((hitTextBox(a, q, 12 / CK) || txHandle(a, q)) && e.cancelable) e.preventDefault();
+    }
+    cv.addEventListener('touchstart', keepTyping, { passive: false }); cv.addEventListener('mousedown', keepTyping);
     cv.addEventListener('pointercancel', endDrag);
 
     // ---------------------------------------------------------------- option panels
@@ -680,12 +910,7 @@
       } else if (t === 'flip') {
         h = '<div class="ie-row"><button type="button" class="chip" data-flip="h">⇋ Flip horizontal</button><button type="button" class="chip" data-flip="v">⇅ Flip vertical</button></div>';
       } else if (t === 'text') {
-        h = '<textarea id="ieTxt" rows="2" placeholder="Type your text, then tap the photo">' + escapeHtml(P.text) + '</textarea>' +
-          slider('ieTs', 'Size', 2, 20, Math.round(P.textSize), '%') +
-          '<label>Colour <input type="color" id="ieTc" value="' + P.textColor + '"></label>' +
-          '<label><input type="checkbox" id="ieTb"' + (P.bold ? ' checked' : '') + '> Bold</label>' +
-          '<div class="ie-row"><button type="button" class="chip" id="ieAddCenter">＋ Add text in the middle</button><button type="button" class="chip" id="ieDelSel">🗑 Delete selected</button></div>' +
-          '<p class="ie-hint">Tap the photo to place text. Tap text to select it, then drag to move or edit it above.</p>';
+        h = txOptsHtml();
       } else if (t === 'draw') {
         h = '<label>Colour <input type="color" id="ieSc" value="' + P.color + '"></label>' + slider('ieLw', 'Thickness', 1, 30, Math.round(P.lw), '') + '<div class="ie-row"><button type="button" class="chip" id="ieDelAll">Delete all drawings</button></div><p class="ie-hint">Draw freehand directly on the photo. Choose any colour and line thickness.</p>';
       } else if (t === 'arrow' || t === 'rect' || t === 'circle') {
@@ -751,19 +976,7 @@
       } else if (t === 'flip') {
         Array.prototype.forEach.call(optsEl.querySelectorAll('[data-flip]'), function (b) { b.addEventListener('click', function () { flip(b.dataset.flip); }); });
       } else if (t === 'text') {
-        on('ieTxt', 'input', function (e) { P.text = e.target.value; var a = selObj(); if (a && a.t === 'text') edit(function () { a.text = P.text || 'Text'; }); });
-        on('ieTxt', 'change', endEdit);
-        on('ieTs', 'input', function (e) { P.textSize = +e.target.value; setVal('ieTsV', P.textSize + '%'); var a = selObj(); if (a && a.t === 'text') edit(function () { a.s = S.base.width * P.textSize / 100; }); });
-        on('ieTs', 'change', endEdit);
-        on('ieTc', 'input', function (e) { P.textColor = e.target.value; var a = selObj(); if (a && a.t === 'text') edit(function () { a.c = P.textColor; }); });
-        on('ieTc', 'change', endEdit);
-        on('ieTb', 'change', function (e) { P.bold = e.target.checked; var a = selObj(); if (a && a.t === 'text') { pushHist(); a.b = P.bold; render(); } });
-        on('ieAddCenter', 'click', function () {
-          pushHist();
-          var a = { t: 'text', x: 0, y: 0, s: S.base.width * P.textSize / 100, c: P.textColor, b: P.bold, text: P.text || 'Text' }, b = textBox(a);
-          a.x = (S.base.width - b.w) / 2; a.y = (S.base.height - b.h) / 2; S.annots.push(a); S.sel = S.annots.length - 1; render();
-        });
-        on('ieDelSel', 'click', delSel);
+        txWire();
       } else if (t === 'draw' || t === 'arrow' || t === 'rect' || t === 'circle') {
         on('ieSc', 'input', function (e) { P.color = e.target.value; var a = selObj(); if (a && a.t !== 'text') edit(function () { a.c = P.color; }); });
         on('ieSc', 'change', endEdit);
@@ -846,7 +1059,7 @@
         on('ieWmOn', 'change', function (e) { pushHist(); S.wm.on = e.target.checked; render(); });
       }
     }
-    function delSel() { if (S.sel < 0) return; pushHist(); S.annots.splice(S.sel, 1); S.sel = -1; render(); }
+    function delSel() { if (S.sel < 0) return; stopTyping(); pushHist(); S.annots.splice(S.sel, 1); S.sel = -1; renderOpts(); render(); }
 
     // ---------------------------------------------------------------- export
     function renderFull(jpg) {
@@ -897,6 +1110,208 @@
       }, mime, fmt === 'png' ? undefined : P.q / 100);
     }
 
+
+    // ---------------------------------------------------------------- full-screen editing window
+    // Tapping a tool opens a full-screen window: the picture on top, the options of THAT tool at the bottom (no scrolling).
+    // With several gallery images the ‹ › buttons go to the previous / next image and keep the current tool.
+    function fitViewport() {      // keeps the window above the phone keyboard (Text tool)
+      if (!imm) return;
+      var vv = window.visualViewport;
+      if (vv) { workEl.style.top = vv.offsetTop + 'px'; workEl.style.height = vv.height + 'px'; workEl.style.bottom = 'auto'; }
+    }
+    function enterImm() {
+      if (imm || !S.base) return;
+      imm = true; ieEl.classList.add('ie-imm'); document.documentElement.style.overflow = 'hidden'; document.body.style.overflow = 'hidden';
+      fitViewport(); updateNav();
+      window.requestAnimationFrame(function () { if (imm && S.base) { layout(); render(); } });
+    }
+    function exitImm() {
+      if (!imm) return;
+      if (S.tool === 'crop' && crop && crop.w > 2 && crop.h > 2) applyCrop();   // Done keeps a crop frame that is on the picture
+      imm = false; ieEl.classList.remove('ie-imm');
+      workEl.style.top = ''; workEl.style.height = ''; workEl.style.bottom = '';
+      document.documentElement.style.overflow = ''; document.body.style.overflow = '';
+      setTool(null);
+      if (shared) flush();
+      window.setTimeout(function () { revealEditor(); }, 60);
+    }
+    function galCount() { return shared && G.count ? G.count() : 1; }
+    function updateNav() {
+      var nav = $('ieNav'); if (!nav) return;
+      var n = galCount(); nav.hidden = n < 2; var tt = $('ieTitle'); if (tt) tt.style.display = n > 1 ? 'none' : '';   // the tool strip already shows the tool; the title is only for a single image
+      if (n > 1) { var i = G.index(); $('iePos').textContent = (i + 1) + ' / ' + n; $('iePrev').disabled = i <= 0; $('ieNext').disabled = i >= n - 1; }
+    }
+    function goImage(d) {
+      if (!shared || !G.select) return;
+      var i = G.index() + d; if (i < 0 || i >= G.count()) return;
+      G.select(i);   // the gallery announces the change; the editor then loads that image and keeps the tool
+      window.setTimeout(updateNav, 80);
+    }
+
+
+    // ---------------------------------------------------------------- text tool: behaviour
+    var TSKEYS = ['f', 'b', 'i', 'u', 'al', 'c', 'g', 'sk', 'skc', 'sh', 'shc', 'shb', 'bg', 'bga', 'ls', 'lh', 'skw', 'op'];
+    var SW = ['#ffffff', '#000000', '#e53935', '#fb8c00', '#fdd835', '#43a047', '#1e88e5', '#8e24aa', '#ec407a', '#795548'];
+    function selText() { var a = S.sel >= 0 ? S.annots[S.sel] : null; return a && a.t === 'text' ? a : null; }
+    function syncStyleFromSel() {
+      var a = selText(); if (!a) return;
+      TSKEYS.forEach(function (k) { if (a[k] !== undefined) P.ts[k] = a[k]; });
+      if (a.bg) P.ts.bgc = a.bg;
+      P.textSize = a.s / S.base.width * 100;
+    }
+    function setTopDone(typing) { var d = $('ieTopDone'); if (d) d.textContent = typing ? '✓ OK' : '✓ Done'; }
+    function stopTyping() {           // leave typing mode without any clean-up (used when the text is deleted / undone / replaced)
+      var was = txEditing; txEditing = false; clearInterval(caretT); ieEl.classList.remove('ie-typing'); setTopDone(false);
+      var ta = $('ieTxIn'); if (was && ta) ta.blur();
+    }
+    function blurTx() { var ta = $('ieTxIn'); if (txEditing && ta) ta.blur(); }
+    function onTxBlur() {
+      if (!txEditing) return;
+      txEditing = false; clearInterval(caretT); ieEl.classList.remove('ie-typing'); setTopDone(false); endEdit();
+      var a = selText();
+      if (a && !String(a.text || '').length) { S.annots.splice(S.sel, 1); S.sel = -1; if (txNewHist) { hist.pop(); syncHist(); } }   // an empty box is not kept
+      txNewHist = false; renderOpts(); render();
+      window.requestAnimationFrame(function () { if (imm && S.base) { layout(); render(); } });
+    }
+    function focusTx(isNew) {
+      var a = selText(), ta = $('ieTxIn'); if (!a || a.lock || !ta) return;
+      if (!isNew) { optEditing = false; txNewHist = false; }
+      ta.value = a.text || ''; txEditing = true; ieEl.classList.add('ie-typing'); setTopDone(true);
+      try { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); } catch (e) { /* ignore */ }
+      caretOn = true; clearInterval(caretT); caretT = setInterval(function () { caretOn = !caretOn; if (!drag && txEditing) render(); }, 530);
+      window.requestAnimationFrame(function () { if (imm && S.base) { layout(); render(); } });
+      render();
+    }
+    function newText() {
+      if (!S.base) return;
+      blurTx(); pushHist(); txNewHist = true; optEditing = true;
+      var W = S.base.width, H = S.base.height, n = S.annots.filter(function (o) { return o.t === 'text'; }).length;
+      var o = { t: 'text', x: 0, y: 0, s: W * (P.textSize || 7) / 100, text: '' };
+      TSKEYS.forEach(function (k) { if (P.ts[k] !== undefined) o[k] = P.ts[k]; });
+      recenter(o, { x: W / 2 + n * W * 0.03, y: H / 2 + n * W * 0.03 });
+      S.annots.push(o); S.sel = S.annots.length - 1; renderOpts(); render(); focusTx(true);
+    }
+    function copyText() {
+      var a = selText(); if (!a) return; blurTx(); a = selText(); if (!a) return;
+      pushHist(); var o = JSON.parse(JSON.stringify(a)); o.lock = false; o.x += S.base.width * 0.03; o.y += S.base.width * 0.03;
+      S.annots.push(o); S.sel = S.annots.length - 1; renderOpts(); render();
+    }
+    function lockText() { var a = selText(); if (!a) return; pushHist(); a.lock = !a.lock; if (a.lock) blurTx(); renderOpts(); render(); }
+    function tSet(patch, once) {      // change style: the selected text and the defaults for the next new text
+      Object.keys(patch).forEach(function (k) { P.ts[k] = patch[k]; });
+      var a = selText();
+      if (!a || a.lock) { render(); return; }
+      var apply = function () { var c = centerOf(a); Object.keys(patch).forEach(function (k) { a[k] = patch[k]; }); recenter(a, c); };
+      if (once) { pushHist(); apply(); render(); } else edit(apply);
+    }
+    function startPinch(a) {
+      var ks = Object.keys(ptrs), q1 = ptrs[ks[0]], q2 = ptrs[ks[1]]; pushHist();
+      drag = { mode: 'pinch', a: a, c: centerOf(a), d0: Math.max(10, Math.hypot(q2.x - q1.x, q2.y - q1.y)), a0: Math.atan2(q2.y - q1.y, q2.x - q1.x), s0: a.s, r0: a.rot || 0 };
+    }
+    function textDown(p) {
+      var a = selText();
+      if (Object.keys(ptrs).length >= 2 && a && !a.lock) { startPinch(a); return; }
+      var onSel = a && (hitTextBox(a, p, 12 / CK) || txHandle(a, p));
+      if (txEditing && !onSel) { blurTx(); a = selText(); }
+      if (a && !(txEditing && !onSel)) {
+        var h = txHandle(a, p);
+        if (h === 'x') { delSel(); return; }
+        if (h === 'e') { if (a.lock) say('This text is locked. Tap Unlock to edit it.'); else pendingFocus = true; return; }
+        if (h === 'r') {
+          if (a.lock) { say('This text is locked. Tap Unlock to resize it.'); return; }
+          var pts = txPts(a); pushHist();
+          drag = { mode: 'tscale', a: a, c: pts.c, d0: Math.max(1, Math.hypot(p.x - pts.c.x, p.y - pts.c.y)), a0: Math.atan2(p.y - pts.c.y, p.x - pts.c.x), s0: a.s, r0: a.rot || 0 };
+          return;
+        }
+      }
+      var hi = -1;
+      for (var i = S.annots.length - 1; i >= 0; i--) { var o = S.annots[i]; if (o.t === 'text' && hitTextBox(o, p, 12 / CK)) { hi = i; break; } }
+      if (hi >= 0) {
+        S.sel = hi; syncStyleFromSel();
+        drag = { mode: 'move', ox: p.x, oy: p.y, start: JSON.parse(JSON.stringify(S.annots[hi])), moved: false, text: true };
+        renderOpts();
+      } else { S.sel = -1; drag = null; renderOpts(); }
+    }
+    function txFontPane() {
+      return '<div class="ie-fonts">' + FONTS.map(function (f) {
+        return '<button type="button" class="chip ie-fontchip" data-font="' + f.k + '" aria-pressed="' + (P.ts.f === f.k) + '" style="font-family:' + f.css.replace(/"/g, '&quot;') + '"><b>' + (f.lang === 'ur' ? 'اردو' : 'Aa') + '</b><small>' + f.n + '</small></button>';
+      }).join('') + '</div><p class="ie-hint" id="ieFontMsg">Urdu and English fonts. Online fonts need an internet connection the first time.</p>';
+    }
+    function txOptsHtml() {
+      var ts = P.ts, a = selText(), tab = P.ttab || 'font', W = S.base.width, body = '';
+      var h = '<div class="ie-txbar"><button type="button" class="chip" id="ieTxNew">＋ New</button>' +
+        '<button type="button" class="chip" id="ieTxCopy"' + (a ? '' : ' disabled') + '>⧉ Copy</button>' +
+        '<button type="button" class="chip" id="ieTxLock"' + (a ? '' : ' disabled') + '>' + (a && a.lock ? '🔓 Unlock' : '🔒 Lock') + '</button>' +
+        '<button type="button" class="chip" id="ieTxDel"' + (a ? '' : ' disabled') + '>🗑 Delete</button></div>' +
+        '<div class="ie-txtabs" id="ieTxTabs">' + chips('data-tt', [['font', 'Font'], ['col', 'Colour'], ['stroke', 'Stroke'], ['shadow', 'Shadow'], ['back', 'Box'], ['style', 'Style'], ['space', 'Spacing'], ['tf', 'Size · Rotate']], tab) + '</div>';
+      if (tab === 'font') body = txFontPane();
+      else if (tab === 'col') {
+        body = '<div class="ie-row">' + SW.map(function (c) { return '<button type="button" class="ie-sw" data-tcol="' + c + '" aria-pressed="' + (String(ts.c).toLowerCase() === c) + '" style="background:' + c + '" aria-label="' + c + '"></button>'; }).join('') + '</div>' +
+          '<label>Custom <input type="color" id="ieTc" value="' + ts.c + '"></label>' +
+          '<label><input type="checkbox" id="ieTg"' + (ts.g ? ' checked' : '') + '> Gradient</label>' + (ts.g ? '<label>2nd colour <input type="color" id="ieTg2" value="' + ts.g[1] + '"></label>' : '');
+      } else if (tab === 'stroke') {
+        body = slider('ieSk', 'Outline', 0, 30, Math.round((ts.sk || 0) * 100), '%') + '<label>Colour <input type="color" id="ieSkc" value="' + (ts.skc || '#000000') + '"></label>';
+      } else if (tab === 'shadow') {
+        body = '<label><input type="checkbox" id="ieSh"' + (ts.sh ? ' checked' : '') + '> Shadow</label><label>Colour <input type="color" id="ieShc" value="' + (ts.shc || '#000000') + '"></label>' + slider('ieShb', 'Blur', 0, 40, Math.round((ts.shb == null ? 0.08 : ts.shb) * 100), '%');
+      } else if (tab === 'back') {
+        body = '<label><input type="checkbox" id="ieBg"' + (ts.bg ? ' checked' : '') + '> Box behind text</label><label>Colour <input type="color" id="ieBgc" value="' + (ts.bgc || '#000000') + '"></label>' + slider('ieBga', 'Opacity', 10, 100, Math.round((ts.bga == null ? 0.6 : ts.bga) * 100), '%');
+      } else if (tab === 'style') {
+        body = '<div class="ie-row">' + [['b', '<b>B</b>'], ['i', '<i>I</i>'], ['u', '<u>U</u>']].map(function (x) { return '<button type="button" class="chip" data-tf="' + x[0] + '" aria-pressed="' + (!!ts[x[0]]) + '">' + x[1] + '</button>'; }).join('') + '</div>' +
+          '<div class="ie-row">' + chips('data-al', [['left', '⇤ Left'], ['center', '↔ Centre'], ['right', 'Right ⇥']], ts.al || 'left') + '</div>';
+      } else if (tab === 'space') {
+        body = slider('ieLs', 'Letters', -5, 40, Math.round((ts.ls || 0) * 100), '%') + slider('ieLh', 'Lines', 80, 300, Math.round((ts.lh || fontDef({ f: ts.f }).lh) * 100), '%');
+      } else {
+        var size = a ? a.s / W * 100 : P.textSize, rot = a ? (((a.rot || 0) * 180 / Math.PI) % 360 + 360) % 360 : 0;
+        body = slider('ieTs', 'Size', 2, 40, Math.round(size), '%') + slider('ieRot', 'Rotate', 0, 360, Math.round(rot), '°') + slider('ieSkw', 'Slant', -45, 45, Math.round(ts.skw || 0), '°') + slider('ieOp', 'Opacity', 10, 100, Math.round(ts.op == null ? 100 : ts.op), '%');
+      }
+      return h + '<div class="ie-txpane">' + body + '</div><p class="ie-hint">' + (a ? 'Tap the box to type. Drag it to move. Drag ↘ to resize and rotate, or pinch with two fingers.' : 'Tap ＋ New to add text on the photo.') + '</p>';
+    }
+    function txWire() {
+      on('ieTxNew', 'click', newText); on('ieTxCopy', 'click', copyText); on('ieTxLock', 'click', lockText); on('ieTxDel', 'click', delSel);
+      Array.prototype.forEach.call(optsEl.querySelectorAll('[data-tt]'), function (b) { b.addEventListener('click', function () { P.ttab = b.dataset.tt; renderOpts(); }); });
+      Array.prototype.forEach.call(optsEl.querySelectorAll('[data-font]'), function (b) {
+        previewFont(FONTS.filter(function (f) { return f.k === b.dataset.font; })[0]);
+        b.addEventListener('click', function () {
+          var f = FONTS.filter(function (x) { return x.k === b.dataset.font; })[0], msg = $('ieFontMsg');
+          tSet({ f: f.k, lh: 0 }, true);
+          Array.prototype.forEach.call(optsEl.querySelectorAll('[data-font]'), function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+          if (f.g && msg) msg.textContent = 'Loading ' + f.n + '…';
+          useFont(f, function (ok) { if (msg) msg.textContent = ok ? (f.g ? f.n + ' is ready.' : '') : 'Could not load ' + f.n + ' (no internet?). A similar font is used.'; var a = selText(); if (a) { var c = centerOf(a); recenter(a, c); } render(); });
+        });
+      });
+      Array.prototype.forEach.call(optsEl.querySelectorAll('[data-tcol]'), function (b) { b.addEventListener('click', function () { var c = b.dataset.tcol; tSet({ c: c, g: P.ts.g ? [c, P.ts.g[1]] : null }, true); renderOpts(); }); });
+      on('ieTc', 'input', function (e) { var c = e.target.value; tSet({ c: c, g: P.ts.g ? [c, P.ts.g[1]] : null }); }); on('ieTc', 'change', endEdit);
+      on('ieTg', 'change', function (e) { tSet({ g: e.target.checked ? [P.ts.c, '#ffd54f'] : null }, true); renderOpts(); });
+      on('ieTg2', 'input', function (e) { tSet({ g: [P.ts.c, e.target.value] }); }); on('ieTg2', 'change', endEdit);
+      on('ieSk', 'input', function (e) { var v = +e.target.value; setVal('ieSkV', v + '%'); tSet({ sk: v / 100 }); }); on('ieSk', 'change', endEdit);
+      on('ieSkc', 'input', function (e) { tSet({ skc: e.target.value, sk: P.ts.sk || 0.08 }); }); on('ieSkc', 'change', endEdit);
+      on('ieSh', 'change', function (e) { tSet({ sh: e.target.checked ? 1 : 0 }, true); });
+      on('ieShc', 'input', function (e) { tSet({ shc: e.target.value, sh: 1 }); }); on('ieShc', 'change', endEdit);
+      on('ieShb', 'input', function (e) { var v = +e.target.value; setVal('ieShbV', v + '%'); tSet({ shb: v / 100, sh: 1 }); }); on('ieShb', 'change', endEdit);
+      on('ieBg', 'change', function (e) { tSet({ bg: e.target.checked ? (P.ts.bgc || '#000000') : '' }, true); });
+      on('ieBgc', 'input', function (e) { P.ts.bgc = e.target.value; tSet({ bg: e.target.value }); }); on('ieBgc', 'change', endEdit);
+      on('ieBga', 'input', function (e) { var v = +e.target.value; setVal('ieBgaV', v + '%'); tSet({ bga: v / 100 }); }); on('ieBga', 'change', endEdit);
+      Array.prototype.forEach.call(optsEl.querySelectorAll('[data-tf]'), function (b) { b.addEventListener('click', function () { var k = b.dataset.tf, v = P.ts[k] ? 0 : 1, patch = {}; patch[k] = v; tSet(patch, true); b.setAttribute('aria-pressed', v ? 'true' : 'false'); }); });
+      Array.prototype.forEach.call(optsEl.querySelectorAll('[data-al]'), function (b) { b.addEventListener('click', function () { tSet({ al: b.dataset.al }, true); Array.prototype.forEach.call(optsEl.querySelectorAll('[data-al]'), function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); }); }); });
+      on('ieLs', 'input', function (e) { var v = +e.target.value; setVal('ieLsV', v + '%'); tSet({ ls: v / 100 }); }); on('ieLs', 'change', endEdit);
+      on('ieLh', 'input', function (e) { var v = +e.target.value; setVal('ieLhV', v + '%'); tSet({ lh: v / 100 }); }); on('ieLh', 'change', endEdit);
+      on('ieTs', 'input', function (e) { var v = +e.target.value; setVal('ieTsV', v + '%'); P.textSize = v; var a = selText(); if (a && !a.lock) edit(function () { var c = centerOf(a); a.s = S.base.width * v / 100; recenter(a, c); }); }); on('ieTs', 'change', endEdit);
+      on('ieRot', 'input', function (e) { var v = +e.target.value; setVal('ieRotV', v + '°'); var a = selText(); if (a && !a.lock) edit(function () { a.rot = v * Math.PI / 180; }); }); on('ieRot', 'change', endEdit);
+      on('ieSkw', 'input', function (e) { var v = +e.target.value; setVal('ieSkwV', v + '°'); tSet({ skw: v }); }); on('ieSkw', 'change', endEdit);
+      on('ieOp', 'input', function (e) { var v = +e.target.value; setVal('ieOpV', v + '%'); tSet({ op: v }); }); on('ieOp', 'change', endEdit);
+    }
+    (function () {
+      var ta = $('ieTxIn'); if (!ta) return;
+      ta.addEventListener('input', function () {
+        var a = selText(); if (!a || a.lock) return;
+        if (!optEditing) { pushHist(); optEditing = true; }
+        var c = centerOf(a); a.text = ta.value; recenter(a, c); caretOn = true; render();
+      });
+      ta.addEventListener('blur', onTxBlur);
+      ta.addEventListener('keydown', function (e) { if (e.key === 'Escape') { e.preventDefault(); ta.blur(); } });
+      document.addEventListener('selectionchange', function () { if (txEditing && document.activeElement === ta) { caretOn = true; render(); } });
+    })();
+
     // ---------------------------------------------------------------- wiring
     var tb = $('ieTools');
     TOOLS.forEach(function (t) {
@@ -905,7 +1320,10 @@
       var sp = t[1].indexOf(' '), ic = document.createElement('span'), lb = document.createElement('span');
       ic.className = 'ie-ti'; ic.setAttribute('aria-hidden', 'true'); ic.textContent = t[1].slice(0, sp); lb.textContent = t[1].slice(sp + 1);
       b.appendChild(ic); b.appendChild(lb);
-      b.addEventListener('click', function () { setTool(t[0]); });
+      b.addEventListener('click', function () {
+        enterImm(); setTool(t[0]);
+        if (t[0] === 'text' && S.base && !S.annots.some(function (o) { return o.t === 'text'; })) newText();   // a first box appears at once
+      });
       tb.appendChild(b);
     });
     $('ieSel').addEventListener('click', function () { $('ieFile').click(); });
@@ -923,6 +1341,15 @@
     $('ieRedo').addEventListener('click', redoOp);
     $('ieReset').addEventListener('click', resetAll);
     $('ieRotate').addEventListener('click', function () { if (S.base) rotate(1); });
+    $('ieTopDone').addEventListener('click', function () { if (txEditing) { blurTx(); return; } exitImm(); });
+    ['mousedown', 'touchstart'].forEach(function (ev) { $('ieTop').addEventListener(ev, function (e) { if (txEditing && e.cancelable) e.preventDefault(); }, { passive: false }); });
+    $('ieTopUndo').addEventListener('click', undo);
+    $('ieTopRedo').addEventListener('click', redoOp);
+    $('ieTopRot').addEventListener('click', function () { if (S.base) rotate(1); });
+    $('iePrev').addEventListener('click', function () { goImage(-1); });
+    $('ieNext').addEventListener('click', function () { goImage(1); });
+    if (window.visualViewport) { window.visualViewport.addEventListener('resize', fitViewport); window.visualViewport.addEventListener('scroll', fitViewport); }
+    if (window.ResizeObserver && stageEl) { var roT = 0; new ResizeObserver(function () { if (!imm || !S.base) return; cancelAnimationFrame(roT); roT = requestAnimationFrame(function () { layout(); render(); }); }).observe(stageEl); }
     $('ieSaveKeep').addEventListener('click', function () {
       if (!S.base) return;
       clearTimeout(saveT); saveT = null; autoDirty = true; autoEl.textContent = 'Saving…';
@@ -946,29 +1373,31 @@
     $('ieQ').addEventListener('input', function (e) { P.q = +e.target.value; $('ieQv').textContent = P.q + '%'; });
 
     document.addEventListener('keydown', function (e) {
-      if (!S.base || root.offsetParent === null) return;
+      if (!S.base || !shown()) return;
       var tag = (e.target && e.target.tagName) || '';
       if (/INPUT|TEXTAREA|SELECT/.test(tag)) return;
+      if (imm) { if (e.key === 'Escape') { e.preventDefault(); exitImm(); return; } if (e.key === 'ArrowLeft') { goImage(-1); return; } if (e.key === 'ArrowRight') { goImage(1); return; } }
       if ((e.key === 'Delete' || e.key === 'Backspace') && S.sel >= 0) { e.preventDefault(); delSel(); }
       else if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); }
       else if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'y' || (e.shiftKey && e.key.toLowerCase() === 'z'))) { e.preventDefault(); redoOp(); }
     });
     var rz;
-    window.addEventListener('resize', function () { clearTimeout(rz); rz = setTimeout(function () { if (S.base && root.offsetParent !== null) { layout(); render(); } }, 120); });
+    window.addEventListener('resize', function () { clearTimeout(rz); rz = setTimeout(function () { if (S.base && shown()) { layout(); render(); } }, 120); });
 
     if (shared) {
       inst = { refresh: syncFromGallery, flush: flush };
-      inst.startTool = function (t) { root.dataset.startTool = t || ''; if (S.base && root.offsetParent !== null) setTool(t || null); };
+      inst.startTool = function (t) { root.dataset.startTool = t || ''; if (S.base && shown()) setTool(t || null); };
       G.onChange(function (c) {
         if (S.writing && c && c.id === S.itemId) return;   // our own write-back
-        if (root.offsetParent === null) return;           // Edit tab hidden: refreshed when it is shown
+        if (!shown()) return;           // Edit tab hidden: refreshed when it is shown
         syncFromGallery();
       });
       syncFromGallery();
     }
 
     // Small read-only hook used by automated tests
-    root._ie = { state: function () { return { w: S.base && S.base.width, h: S.base && S.base.height, annots: S.annots.length, tool: S.tool, adj: S.adj, overlays: S.annots.filter(function (a) { return a.t === 'img'; }).length, wm: S.wm.on, hist: hist.length, crop: crop && { x: crop.x, y: crop.y, w: crop.w, h: crop.h } }; } };
+    root._ie = { texts: function () { return S.annots.filter(function (a) { return a.t === 'text'; }).map(function (a) { return JSON.parse(JSON.stringify(a)); }); }, geom: function () { var a = selText(); if (!a) return null; var pts = txPts(a), r = cv.getBoundingClientRect(); function c(q) { return [r.left + q.x * CK, r.top + q.y * CK]; } return { x: c(pts.x), e: c(pts.e), r: c(pts.r), c: c(pts.c) }; }, typing: function () { return txEditing; }, sel: function () { return S.sel; },
+      state: function () { return { w: S.base && S.base.width, h: S.base && S.base.height, annots: S.annots.length, tool: S.tool, adj: S.adj, overlays: S.annots.filter(function (a) { return a.t === 'img'; }).length, wm: S.wm.on, hist: hist.length, crop: crop && { x: crop.x, y: crop.y, w: crop.w, h: crop.h } }; } };
   }
 
   var inst = null;
